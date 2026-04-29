@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Building2, Users, FileText, BarChart3, LogOut, ShieldCheck, Lock, Loader2 } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const nav = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
@@ -24,11 +22,18 @@ function Paywall({ userEmail, userId }: { userEmail: string; userId: string }) {
     try {
       setLoading(true);
 
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Usuário não autenticado");
+
       const response = await fetch(
         "https://wcopsrcnxzdwrbhykmgu.supabase.co/functions/v1/create-checkout-session",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
           body: JSON.stringify({
             priceId: import.meta.env.VITE_STRIPE_PRICE_ID,
             customerEmail: userEmail,
@@ -40,11 +45,10 @@ function Paywall({ userEmail, userId }: { userEmail: string; userId: string }) {
       );
 
       const { url, error } = await response.json();
-
       if (error) throw new Error(error);
       if (!url) throw new Error("URL não retornada");
 
-      window.location.href = url; // ✅ redireciona para o checkout do Stripe
+      window.location.href = url;
 
     } catch (err: any) {
       console.error(err);
@@ -127,7 +131,7 @@ export default function AppLayout() {
 
       {isTrial && daysLeft <= 3 && (
         <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-center text-xs text-amber-700 dark:text-amber-300">
-           Seu período gratuito encerra em <strong>{daysLeft} {daysLeft === 1 ? "dia" : "dias"}</strong>. Assine para continuar usando sem interrupções.
+          ⚠️ Seu período gratuito encerra em <strong>{daysLeft} {daysLeft === 1 ? "dia" : "dias"}</strong>. Assine para continuar usando sem interrupções.
         </div>
       )}
 
