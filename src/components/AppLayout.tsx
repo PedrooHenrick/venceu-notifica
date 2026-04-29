@@ -23,19 +23,29 @@ function Paywall({ userEmail, userId }: { userEmail: string; userId: string }) {
   const handleCheckout = async () => {
     try {
       setLoading(true);
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error("Stripe não carregou");
 
-      const { error } = await stripe.redirectToCheckout({
-        lineItems: [{ price: import.meta.env.VITE_STRIPE_PRICE_ID, quantity: 1 }],
-        mode: "subscription",
-        customerEmail: userEmail,
-        clientReferenceId: userId, // 👈 identifica o usuário no webhook
-        successUrl: `${window.location.origin}/dashboard?payment=success`,
-        cancelUrl: `${window.location.origin}/dashboard?payment=canceled`,
-      });
+      const response = await fetch(
+        "https://wcopsrcnxzdwrbhykmgu.supabase.co/functions/v1/create-checkout-session",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            priceId: import.meta.env.VITE_STRIPE_PRICE_ID,
+            customerEmail: userEmail,
+            clientReferenceId: userId,
+            successUrl: `${window.location.origin}/dashboard?payment=success`,
+            cancelUrl: `${window.location.origin}/dashboard?payment=canceled`,
+          }),
+        }
+      );
 
-      if (error) throw error;
+      const { url, error } = await response.json();
+
+      if (error) throw new Error(error);
+      if (!url) throw new Error("URL não retornada");
+
+      window.location.href = url; // ✅ redireciona para o checkout do Stripe
+
     } catch (err: any) {
       console.error(err);
       alert("Erro ao abrir o checkout. Tente novamente.");
@@ -46,10 +56,7 @@ function Paywall({ userEmail, userId }: { userEmail: string; userId: string }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Fundo borrado */}
       <div className="absolute inset-0 backdrop-blur-sm bg-background/60" />
-
-      {/* Card central */}
       <div className="relative z-10 mx-4 w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-2xl">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
           <Lock className="h-7 w-7 text-primary" />
@@ -70,12 +77,7 @@ function Paywall({ userEmail, userId }: { userEmail: string; userId: string }) {
           </p>
         </div>
 
-        <Button
-          className="w-full"
-          size="lg"
-          onClick={handleCheckout}
-          disabled={loading}
-        >
+        <Button className="w-full" size="lg" onClick={handleCheckout} disabled={loading}>
           {loading ? (
             <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aguarde...</>
           ) : (
@@ -98,7 +100,6 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top bar */}
       <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-2.5">
           <div className="flex items-center gap-2">
@@ -124,7 +125,6 @@ export default function AppLayout() {
         </div>
       </header>
 
-      {/* Banner de aviso nos últimos 3 dias */}
       {isTrial && daysLeft <= 3 && (
         <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-center text-xs text-amber-700 dark:text-amber-300">
           ⚠️ Seu período gratuito encerra em <strong>{daysLeft} {daysLeft === 1 ? "dia" : "dias"}</strong>. Assine para continuar usando sem interrupções.
@@ -132,7 +132,6 @@ export default function AppLayout() {
       )}
 
       <div className="mx-auto flex max-w-[1400px]">
-        {/* Sidebar */}
         <aside className="hidden w-56 shrink-0 border-r border-border bg-card md:block">
           <nav className="py-2">
             {nav.map((item) => (
@@ -160,7 +159,6 @@ export default function AppLayout() {
             <Outlet />
           </div>
 
-          {/* Paywall sobreposto ao conteúdo */}
           {isBlocked && (
             <Paywall
               userEmail={user?.email ?? ""}
@@ -170,7 +168,6 @@ export default function AppLayout() {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-30 grid grid-cols-5 border-t border-border bg-card md:hidden">
         {nav.map((item) => (
           <NavLink
