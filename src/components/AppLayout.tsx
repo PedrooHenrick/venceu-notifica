@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, FileText, BarChart3, LogOut, ShieldCheck, Lock, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { NavLink, Outlet, useNavigate, useSearchParams } from "react-router-dom";
+import { LayoutDashboard, Building2, Users, FileText, BarChart3, LogOut, ShieldCheck, Lock, Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+
+const PRODUCTION_URL = "https://venciofy.com.br";
 
 const nav = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
@@ -14,6 +17,26 @@ const nav = [
   { to: "/documentos-empresa", label: "Doc. Empresa", icon: FileText },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
 ];
+
+function PaymentSuccess() {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 backdrop-blur-sm bg-background/60" />
+      <div className="relative z-10 mx-4 w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-2xl">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+          <CheckCircle2 className="h-7 w-7 text-green-600" />
+        </div>
+        <h2 className="text-xl font-semibold tracking-tight">Pagamento confirmado!</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Seu plano está sendo ativado. Aguarde alguns instantes...
+        </p>
+        <div className="mt-6 flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Paywall({ userEmail, userId }: { userEmail: string; userId: string }) {
   const [loading, setLoading] = useState(false);
@@ -38,8 +61,8 @@ function Paywall({ userEmail, userId }: { userEmail: string; userId: string }) {
             priceId: import.meta.env.VITE_STRIPE_PRICE_ID,
             customerEmail: userEmail,
             clientReferenceId: userId,
-            successUrl: `${window.location.origin}/dashboard?payment=success`,
-            cancelUrl: `${window.location.origin}/dashboard?payment=canceled`,
+            successUrl: `${PRODUCTION_URL}/dashboard?payment=success`,
+            cancelUrl: `${PRODUCTION_URL}/dashboard?payment=canceled`,
           }),
         }
       );
@@ -101,6 +124,41 @@ export default function AppLayout() {
   const { user, signOut } = useAuth();
   const { isBlocked, isTrial, daysLeft } = useSubscription();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+  const paymentStatus = searchParams.get("payment");
+
+  useEffect(() => {
+    if (paymentStatus === "success") {
+      // Fica verificando o banco a cada 3s até o webhook ativar a assinatura
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      }, 3000);
+
+      // Para de verificar após 30s e limpa a URL
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+        navigate("/dashboard", { replace: true });
+      }, 30000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+
+    if (paymentStatus === "canceled") {
+      // Remove o parâmetro da URL silenciosamente
+      navigate("/dashboard", { replace: true });
+    }
+  }, [paymentStatus]);
+
+  // Quando assinatura ativar, limpa a URL
+  useEffect(() => {
+    if (!isBlocked && paymentStatus === "success") {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isBlocked, paymentStatus]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,7 +221,11 @@ export default function AppLayout() {
             <Outlet />
           </div>
 
-          {isBlocked && (
+          {/* Tela de sucesso aguardando webhook */}
+          {paymentStatus === "success" && isBlocked && <PaymentSuccess />}
+
+          {/* Paywall normal */}
+          {isBlocked && paymentStatus !== "success" && (
             <Paywall
               userEmail={user?.email ?? ""}
               userId={user?.id ?? ""}
