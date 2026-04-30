@@ -24,6 +24,7 @@ export function useSubscription() {
       return data ?? null;
     },
     enabled: !!user,
+    refetchInterval: 5000, // 👈 verifica a cada 5 segundos automaticamente
   });
 
   const now = new Date();
@@ -32,15 +33,17 @@ export function useSubscription() {
     return { isLoading: true, isBlocked: false, isTrial: false, daysLeft: 0 };
   }
 
-  // Sem registro = usuário novo, ainda no trial
   if (!subscription) {
     return { isLoading: false, isBlocked: false, isTrial: true, daysLeft: 7 };
   }
 
   const { status, trial_ends_at, current_period_end } = subscription;
 
-  // Assinatura ativa e dentro do período
-  if (status === "active" && current_period_end) {
+  // ✅ Assinatura ativa — libera mesmo se current_period_end for null
+  if (status === "active") {
+    if (!current_period_end) {
+      return { isLoading: false, isBlocked: false, isTrial: false, daysLeft: 0 };
+    }
     const periodEnd = new Date(current_period_end);
     if (now < periodEnd) {
       return { isLoading: false, isBlocked: false, isTrial: false, daysLeft: 0 };
