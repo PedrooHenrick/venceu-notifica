@@ -24,7 +24,7 @@ export function useSubscription() {
       return data ?? null;
     },
     enabled: !!user,
-    refetchInterval: 5000,
+    refetchInterval: 5000, // 👈 verifica a cada 5 segundos automaticamente
   });
 
   const now = new Date();
@@ -39,11 +39,10 @@ export function useSubscription() {
 
   const { status, trial_ends_at, current_period_end } = subscription;
 
-  // ✅ Assinatura ativa — current_period_end obrigatório
+  // ✅ Assinatura ativa — libera mesmo se current_period_end for null
   if (status === "active") {
     if (!current_period_end) {
-      // 🔒 Corrigido: sem data de vencimento = bloqueado
-      return { isLoading: false, isBlocked: true, isTrial: false, daysLeft: 0 };
+      return { isLoading: false, isBlocked: false, isTrial: false, daysLeft: 0 };
     }
     const periodEnd = new Date(current_period_end);
     if (now < periodEnd) {
@@ -51,7 +50,7 @@ export function useSubscription() {
     }
   }
 
-  // ✅ Trial ainda válido
+  // Trial ainda válido
   if (status === "trialing") {
     const trialEnd = new Date(trial_ends_at);
     if (now < trialEnd) {
@@ -60,6 +59,6 @@ export function useSubscription() {
     }
   }
 
-  // 🔒 Qualquer outro caso = bloqueado
+  // Qualquer outro caso = bloqueado
   return { isLoading: false, isBlocked: true, isTrial: false, daysLeft: 0 };
 }
