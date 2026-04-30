@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { FileText, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { FileText, Plus, Pencil, Trash2, Search, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,13 +16,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { getStatus, formatDaysLeft } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-const COMPANY_TYPES = ["AVCB", "Alvará Sanitário", "Alvará de Funcionamento", "Licença Ambiental", "PPRA / PGR", "PCMSO", "LTCAT", "Laudo Elétrico", "SPDA", "Contrato", "Outro"];
+const COMPANY_TYPES = ["AVCB", "Alvara Sanitario", "Alvara de Funcionamento", "Licenca Ambiental", "PPRA / PGR", "PCMSO", "LTCAT", "Laudo Eletrico", "SPDA", "Contrato", "Outro"];
 
 const schema = z.object({
   doc_type: z.string().trim().min(1, "Selecione o tipo do documento"),
   company_id: z.string().uuid("Selecione a empresa"),
   issue_date: z.string().optional(),
-  expiry_date: z.string().min(1, "Data de vencimento obrigatória"),
+  expiry_date: z.string().min(1, "Data de vencimento obrigatoria"),
   notes: z.string().trim().max(500).optional(),
 });
 
@@ -70,7 +70,7 @@ export default function CompanyDocuments() {
     const parsed = schema.safeParse(form);
     if (!parsed.success) { toast.error(parsed.error.errors[0].message); return; }
     const payload = {
-      name: parsed.data.doc_type, // usa o tipo como nome
+      name: parsed.data.doc_type,
       doc_type: parsed.data.doc_type,
       company_id: parsed.data.company_id,
       employee_id: null,
@@ -111,9 +111,11 @@ export default function CompanyDocuments() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Documentos da Empresa</h1>
-          <p className="text-xs text-muted-foreground">AVCB, alvarás, laudos e licenças por empresa.</p>
+          <p className="text-xs text-muted-foreground">AVCB, alvaras, laudos e licencas por empresa.</p>
         </div>
-        <Button onClick={openNew} disabled={companies.length === 0} size="sm" className="h-8 gap-1.5"><Plus className="h-3.5 w-3.5" />Novo documento</Button>
+        <Button onClick={openNew} disabled={companies.length === 0} size="sm" className="h-8 gap-1.5">
+          <Plus className="h-3.5 w-3.5" />Novo documento
+        </Button>
       </div>
 
       <div className="relative max-w-md">
@@ -131,45 +133,83 @@ export default function CompanyDocuments() {
           <p className="mt-2 text-muted-foreground">Nenhum documento da empresa cadastrado.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-secondary/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2 font-semibold">Status</th>
-                <th className="px-3 py-2 font-semibold">Empresa</th>
-                <th className="px-3 py-2 font-semibold">Tipo</th>
-                <th className="px-3 py-2 font-semibold">Vencimento</th>
-                <th className="px-3 py-2 font-semibold">Restante</th>
-                <th className="px-3 py-2 text-right font-semibold">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map((d) => {
-                const s = getStatus(d.expiry_date);
-                return (
-                  <tr key={d.id} className="hover:bg-secondary/40">
-                    <td className="px-3 py-2">
+        <>
+          {/* Mobile: cards */}
+          <div className="divide-y divide-border overflow-hidden rounded border border-border bg-card sm:hidden">
+            {filtered.map((d) => {
+              const s = getStatus(d.expiry_date);
+              const statusLabel = s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : s.key === "warning" ? "ATENCAO" : "EM DIA";
+              return (
+                <div key={d.id} className="flex items-start justify-between gap-3 px-3 py-3">
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[11px] font-medium", s.className)}>
                         <span className={cn("h-1.5 w-1.5 rounded-full", s.dotClass)} />
-                        {s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : s.key === "warning" ? "ATENÇÃO" : "EM DIA"}
+                        {statusLabel}
                       </span>
-                    </td>
-                    <td className="px-3 py-2 font-medium">{d.company?.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{d.doc_type || "—"}</td>
-                    <td className="px-3 py-2">{format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}</td>
-                    <td className={cn("px-3 py-2 text-xs font-medium", s.key === "expired" ? "text-status-expired" : s.key === "attention" ? "text-status-attention" : s.key === "warning" ? "text-status-warning" : "text-muted-foreground")}>
-                      {formatDaysLeft(s.daysLeft)}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(d.id)}><Trash2 className="h-3.5 w-3.5 text-status-expired" /></Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <span className="text-sm font-medium text-foreground">{d.doc_type || "—"}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{d.company?.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Vence em{" "}
+                      <span className="font-medium text-foreground">
+                        {format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}
+                      </span>
+                      <span className={cn("ml-2 font-medium", s.key === "expired" ? "text-status-expired" : s.key === "attention" ? "text-status-attention" : s.key === "warning" ? "text-status-warning" : "text-muted-foreground")}>
+                        {formatDaysLeft(s.daysLeft)}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(d.id)}><Trash2 className="h-3.5 w-3.5 text-status-expired" /></Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: tabela */}
+          <div className="hidden overflow-hidden rounded border border-border bg-card sm:block">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-secondary/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 font-semibold">Status</th>
+                  <th className="px-3 py-2 font-semibold">Empresa</th>
+                  <th className="px-3 py-2 font-semibold">Tipo</th>
+                  <th className="px-3 py-2 font-semibold">Vencimento</th>
+                  <th className="px-3 py-2 font-semibold">Restante</th>
+                  <th className="px-3 py-2 text-right font-semibold">Acoes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((d) => {
+                  const s = getStatus(d.expiry_date);
+                  return (
+                    <tr key={d.id} className="hover:bg-secondary/40">
+                      <td className="px-3 py-2">
+                        <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[11px] font-medium", s.className)}>
+                          <span className={cn("h-1.5 w-1.5 rounded-full", s.dotClass)} />
+                          {s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : s.key === "warning" ? "ATENCAO" : "EM DIA"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 font-medium">{d.company?.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{d.doc_type || "—"}</td>
+                      <td className="px-3 py-2">{format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}</td>
+                      <td className={cn("px-3 py-2 text-xs font-medium", s.key === "expired" ? "text-status-expired" : s.key === "attention" ? "text-status-attention" : s.key === "warning" ? "text-status-warning" : "text-muted-foreground")}>
+                        {formatDaysLeft(s.daysLeft)}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(d)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(d.id)}><Trash2 className="h-3.5 w-3.5 text-status-expired" /></Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -191,10 +231,10 @@ export default function CompanyDocuments() {
               </Select>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div><Label>Data de emissão</Label><Input type="date" value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })} /></div>
+              <div><Label>Data de emissao</Label><Input type="date" value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })} /></div>
               <div><Label>Data de vencimento *</Label><Input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} /></div>
             </div>
-            <div><Label>Observações</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+            <div><Label>Observacoes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>

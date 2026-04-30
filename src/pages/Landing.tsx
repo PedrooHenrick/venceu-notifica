@@ -1,213 +1,302 @@
 import { Link, Navigate } from "react-router-dom";
-import { BellRing, CalendarClock, ArrowRight, CheckCircle2, Building2, Users, Mail, Clock, Gift, CreditCard } from "lucide-react";
+import {
+  BellRing, CalendarClock, ArrowRight, CheckCircle2,
+  Building2, Users, Mail, Clock, Gift, CreditCard, ShieldCheck, Zap
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+
 export default function Landing() {
   const { user, loading } = useAuth();
   if (!loading && user) return <Navigate to="/dashboard" replace />;
-  const empresasParceiras = [
-    { nome: "Empresa 1", logo: "/logos/empresa1.png" },
-    { nome: "Empresa 2", logo: "/logos/empresa2.png" },
-    { nome: "Empresa 3", logo: "/logos/empresa3.png" },
-    { nome: "Empresa 4", logo: "/logos/empresa4.png" },
-    { nome: "Empresa 5", logo: "/logos/empresa5.png" },
-  ];
-  const features = [
-    { 
-      icon: BellRing, 
-      title: "Alertas automáticos", 
-      desc: "Receba emails antes do vencimento. Nunca mais olhe planilhas todo dia.", 
-      color: "text-orange-600",
-      bg: "bg-orange-50"
-    },
-    { 
-      icon: CalendarClock, 
-      title: "Controle de prazos", 
-      desc: "Veja num relance documentos a vencer em 7, 15 ou 30 dias.", 
-      color: "text-blue-600",
-      bg: "bg-blue-50"
-    },
-    { 
-      icon: CreditCard, 
-      title: "R$ 20/mês", 
-      desc: "Preço justo, teste grátis de 7 dias. Cancele quando quiser.", 
-      color: "text-green-600",
-      bg: "bg-green-50"
-    },
-  ];
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between flex-wrap gap-4 px-6 py-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xl overflow-hidden">
-            <img 
-              src="/sua-logo-aqui.png" 
-              alt="Venciofy" 
-              className="h-full w-auto object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const fallback = document.createElement('span');
-                fallback.textContent = 'V';
-                e.currentTarget.parentElement?.appendChild(fallback);
-              }}
-            />
+    <div className="min-h-screen bg-white font-sans">
+      {/* ────────────────── HEADER ────────────────── */}
+      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+              <span className="text-sm font-bold text-white">v</span>
+            </div>
+            <span className="text-lg font-bold tracking-tight text-gray-900">Venciofy</span>
           </div>
-          <span className="text-xl font-bold tracking-tight text-gray-900">Venciofy</span>
-        </div>
-        <div className="flex gap-2">
-          <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900">
-            <Link to="/auth">Entrar</Link>
-          </Button>
-          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Link to="/auth?mode=signup">Começar grátis</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900 hidden sm:inline-flex">
+              <Link to="/auth">Entrar</Link>
+            </Button>
+            <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4">
+              <Link to="/auth?mode=signup">Testar gratis</Link>
+            </Button>
+          </div>
         </div>
       </header>
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 py-12 md:py-16">
-        <div className="grid items-center gap-10 md:grid-cols-2">
+
+      {/* ────────────────── HERO ────────────────── */}
+      <section className="mx-auto max-w-6xl px-5 pt-14 pb-10 md:pt-20 md:pb-16">
+        <div className="grid items-center gap-12 md:grid-cols-2">
+          {/* Texto */}
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5">
-              <Gift className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-700">7 dias grátis • Sem compromisso</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700">
+              <Gift className="h-3.5 w-3.5" />
+              7 dias gratis, sem cartao
             </div>
-            
-            <h1 className="mt-5 text-3xl font-bold leading-tight text-gray-900 md:text-4xl lg:text-5xl">
-              Pare de perder noite de sono com{' '}
-              <span className="text-blue-600">documentos vencendo</span>
+
+            <h1 className="mt-5 text-[2rem] font-extrabold leading-[1.15] tracking-tight text-gray-900 md:text-[2.75rem]">
+              Chega de levar multa<br />
+              por <span className="text-blue-600">documento vencido.</span>
             </h1>
-            
-            <p className="mt-5 text-lg text-gray-600">
-              Cadastre funcionários e documentos uma vez. O sistema avisa antes de vencer.
+
+            <p className="mt-4 text-base leading-relaxed text-gray-500 md:text-lg">
+              Cadastre funcionarios e documentos uma vez.
+              O Venciofy avisa antes de vencer — por email, automaticamente.
             </p>
-            <div className="mt-5 rounded-xl bg-blue-50 p-4 border border-blue-100">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-gray-900">R$ 20</span>
-                <span className="text-gray-600">/mês</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Acessível, cancele quando quiser.</p>
+
+            <div className="mt-6 inline-flex flex-col rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
+              <span className="text-2xl font-extrabold text-gray-900">
+                R$ 20<span className="text-base font-normal text-gray-500">/mes</span>
+              </span>
+              <span className="mt-0.5 text-sm text-gray-500">Cancele quando quiser. Sem fidelidade.</span>
             </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="gap-2 bg-blue-600 hover:bg-blue-700">
-                <Link to="/auth?mode=signup">Testar grátis <ArrowRight className="h-4 w-4" /></Link>
+
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white gap-2 px-6">
+                <Link to="/auth?mode=signup">
+                  Comecar teste gratis <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="gap-2">
+                <Link to="/auth">Ja tenho conta</Link>
               </Button>
             </div>
-            
-            <div className="mt-6 flex flex-wrap gap-4 text-sm text-gray-500">
-              <span className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-green-500" /> 7 dias grátis</span>
-              <span className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-green-500" /> Cancele a qualquer momento</span>
+
+            <div className="mt-5 flex flex-wrap gap-4 text-sm text-gray-400">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" /> Sem cartao para testar</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" /> Cancele a qualquer momento</span>
             </div>
           </div>
+
+          {/* Imagem + floating card */}
           <div className="relative">
-            <img 
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=500&fit=crop" 
-              alt="Equipe trabalhando"
-              className="rounded-xl w-full h-auto object-cover shadow-sm"
-              loading="lazy"
-            />
-            <div className="absolute -bottom-3 -left-3 rounded-lg bg-white p-2 shadow-md text-sm">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-600" />
-                <span>Alertas por email</span>
+            <div className="overflow-hidden rounded-2xl shadow-xl">
+              <img
+                src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=700&h=500&fit=crop&q=80"
+                alt="Equipe de RH organizando documentos"
+                className="h-72 w-full object-cover md:h-96"
+                loading="lazy"
+              />
+            </div>
+            {/* Card flutuante - alerta */}
+            <div className="absolute -bottom-4 -left-4 flex items-center gap-3 rounded-xl border border-orange-100 bg-white px-4 py-3 shadow-lg">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50">
+                <BellRing className="h-4 w-4 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-800">NR-10 vence em 3 dias</p>
+                <p className="text-[11px] text-gray-400">Joazinho — Empresa ABC</p>
+              </div>
+            </div>
+            {/* Card flutuante - ok */}
+            <div className="absolute -top-4 -right-4 hidden items-center gap-3 rounded-xl border border-green-100 bg-white px-4 py-3 shadow-lg sm:flex">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50">
+                <ShieldCheck className="h-4 w-4 text-green-500" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-800">Tudo em dia</p>
+                <p className="text-[11px] text-gray-400">12 documentos ativos</p>
               </div>
             </div>
           </div>
         </div>
       </section>
-      {/* Empresas parceiras */}
-      <section className="border-y border-gray-100 py-10">
-        <div className="mx-auto max-w-6xl px-6">
-          <p className="text-center text-sm font-medium uppercase tracking-wide text-gray-400">
-            Empresas que confiam no Venciofy
+
+      {/* ────────────────── PROBLEMA ────────────────── */}
+      <section className="bg-gray-950 py-14">
+        <div className="mx-auto max-w-4xl px-5 text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">O problema real</p>
+          <h2 className="mt-3 text-2xl font-bold text-white md:text-3xl">
+            Quantas vezes voce ja passou por isso?
+          </h2>
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            {[
+              { emoji: "😰", text: "Levou multa por ASO vencido que estava numa planilha perdida" },
+              { emoji: "😤", text: "So descobriu que o NR venceu quando o fiscal apareceu na empresa" },
+              { emoji: "📋", text: "Tem que verificar manualmente dezenas de documentos toda semana" },
+            ].map((item) => (
+              <div key={item.text} className="rounded-xl border border-white/10 bg-white/5 p-5 text-left">
+                <span className="text-2xl">{item.emoji}</span>
+                <p className="mt-3 text-sm leading-relaxed text-gray-300">{item.text}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-8 text-base text-gray-400">
+            O Venciofy resolve isso. Uma vez cadastrado, o sistema cuida do resto.
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-6">
-            {empresasParceiras.map((empresa) => (
-              <div key={empresa.nome} className="h-10 flex items-center justify-center px-4 text-gray-500 text-sm">
-                {empresa.logo ? (
-                  <img src={empresa.logo} alt={empresa.nome} className="h-full object-contain" />
-                ) : (
-                  empresa.nome
-                )}
+        </div>
+      </section>
+
+      {/* ────────────────── COMO FUNCIONA ────────────────── */}
+      <section className="mx-auto max-w-6xl px-5 py-16">
+        <div className="text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">Como funciona</p>
+          <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">3 passos, sem complicacao</h2>
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {[
+            {
+              step: "01",
+              icon: Users,
+              title: "Cadastre funcionarios",
+              desc: "Adicione colaboradores com CPF, cargo e empresa em poucos cliques.",
+              img: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=250&fit=crop&q=80",
+              alt: "Pessoas em reuniao de trabalho"
+            },
+            {
+              step: "02",
+              icon: CalendarClock,
+              title: "Insira as DATAS",
+              desc: "ASO, NR-10, NR-33, AVCB — cadastre data de emissao e vencimento.",
+              img: "/images/doc2.png",
+              alt: "Documentos e contratos em mesa"
+            },
+            {
+              step: "03",
+              icon: Mail,
+              title: "Receba alertas",
+              desc: "Email automatico antes de vencer. Sem planilha, sem esquecimento.",
+              img: "/images/doc3.jpg",
+              alt: "Pessoa recebendo notificacao no celular"
+            },
+          ].map((item) => (
+            <div key={item.step} className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md">
+              <div className="overflow-hidden">
+                <img
+                  src={item.img}
+                  alt={item.alt}
+                  className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+              <div className="p-5">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-black text-blue-100">{item.step}</span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
+                    <item.icon className="h-4 w-4 text-blue-600" />
+                  </div>
+                </div>
+                <h3 className="mt-2 text-base font-semibold text-gray-900">{item.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-gray-500">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ────────────────── FEATURES ────────────────── */}
+      <section className="bg-blue-50 py-14">
+        <div className="mx-auto max-w-6xl px-5">
+          <div className="text-center">
+            <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">Recursos</p>
+            <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">Tudo que voce precisa</h2>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { icon: BellRing, title: "Alertas automaticos", desc: "Email antes de vencer. Nunca mais olhe planilha todo dia.", color: "bg-orange-100 text-orange-600" },
+              { icon: CalendarClock, title: "Painel visual", desc: "Vencidos, urgentes e a vencer num so lugar, tudo claro.", color: "bg-blue-100 text-blue-600" },
+              { icon: Building2, title: "Por empresa", desc: "Organize documentos por funcionario ou por empresa.", color: "bg-indigo-100 text-indigo-600" },
+              { icon: Zap, title: "Rapido de usar", desc: "Cadastre um funcionario em menos de 1 minuto.", color: "bg-yellow-100 text-yellow-600" },
+              { icon: ShieldCheck, title: "Seus dados protegidos", desc: "Hospedagem segura, seus dados nao sao compartilhados.", color: "bg-green-100 text-green-600" },
+              { icon: CreditCard, title: "Preço justo", desc: "R$ 20/mes. Menos que um almoco. Vale cada centavo.", color: "bg-pink-100 text-pink-600" },
+            ].map((f) => (
+              <div key={f.title} className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${f.color}`}>
+                  <f.icon className="h-4 w-4" />
+                </div>
+                <h3 className="mt-3 text-sm font-semibold text-gray-900">{f.title}</h3>
+                <p className="mt-1 text-sm text-gray-500">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
-      {/* Como funciona */}
-      <section className="mx-auto max-w-6xl px-6 py-14">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
-            Como funciona em 3 passos
-          </h2>
-          <p className="mx-auto mt-3 text-gray-600">
-            Simples e direto, sem complicação
-          </p>
-        </div>
-        <div className="mt-10 grid gap-8 md:grid-cols-3">
-          {[
-            { icon: Users, title: "Cadastre funcionários", desc: "Adicione colaboradores em poucos cliques", bg: "bg-blue-50" },
-            { icon: CalendarClock, title: "Insira datas de documentos", desc: "ASO, NR, treinamentos - cadastre uma vez", bg: "bg-indigo-50" },
-            { icon: Mail, title: "Receba alertas", desc: "Email automático antes do vencimento", bg: "bg-green-50" },
-          ].map((step, i) => (
-            <div key={step.title} className="text-center">
-              <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-xl ${step.bg} text-blue-600`}>
-                <step.icon className="h-7 w-7" />
-              </div>
-              <h3 className="mt-3 text-lg font-semibold text-gray-900">{i+1}. {step.title}</h3>
-              <p className="mt-1 text-gray-600 text-sm">{step.desc}</p>
+
+      {/* ────────────────── PRECO ────────────────── */}
+      <section className="mx-auto max-w-4xl px-5 py-16 text-center">
+        <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">Preço</p>
+        <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">Simples e transparente</h2>
+
+        <div className="mx-auto mt-8 max-w-sm overflow-hidden rounded-2xl border-2 border-blue-600 bg-white shadow-lg">
+          <div className="bg-blue-600 py-3 text-sm font-semibold text-white">Plano unico • Sem surpresas</div>
+          <div className="px-8 py-8">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-4xl font-extrabold text-gray-900">R$ 20</span>
+              <span className="text-gray-500">/mes</span>
             </div>
-          ))}
+            <ul className="mt-6 space-y-3 text-sm text-gray-600">
+              {[
+                "Funcionarios e documentos ilimitados",
+                "Alertas por email automaticos",
+                "Painel de vencimentos",
+                "Relatorios exportaveis (CSV/PDF)",
+                "7 dias gratis para testar",
+                "Cancele quando quiser",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Button asChild className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white">
+              <Link to="/auth?mode=signup">Comecar teste gratis</Link>
+            </Button>
+            <p className="mt-3 text-xs text-gray-400">Sem cartao de credito para testar</p>
+          </div>
         </div>
       </section>
-      {/* Features */}
-      <section className="mx-auto max-w-6xl px-6 pb-14">
-        <div className="grid gap-5 md:grid-cols-3">
-          {features.map((f) => (
-            <div key={f.title} className="rounded-xl border border-gray-100 bg-white p-5">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${f.bg} ${f.color}`}>
-                <f.icon className="h-5 w-5" />
+
+      {/* ────────────────── FAQ ────────────────── */}
+      <section className="border-t border-gray-100 bg-gray-50 py-14">
+        <div className="mx-auto max-w-2xl px-5">
+          <h2 className="text-center text-xl font-bold text-gray-900">Duvidas comuns</h2>
+          <div className="mt-8 divide-y divide-gray-200">
+            {[
+              { q: "Como funciona o teste gratis?", a: "7 dias de acesso total sem nenhum custo. Depois, R$ 20/mes se quiser continuar." },
+              { q: "Como recebo os alertas?", a: "Por email, automaticamente quando um documento estiver perto de vencer." },
+              { q: "Posso cancelar quando quiser?", a: "Sim, sem multa, sem burocracia, direto pelo sistema." },
+              { q: "Precisa instalar alguma coisa?", a: "Nao. O Venciofy roda direto no navegador, no celular ou computador." },
+            ].map((item) => (
+              <div key={item.q} className="py-5">
+                <h3 className="text-sm font-semibold text-gray-900">{item.q}</h3>
+                <p className="mt-1.5 text-sm text-gray-500">{item.a}</p>
               </div>
-              <h3 className="mt-3 text-base font-semibold text-gray-900">{f.title}</h3>
-              <p className="mt-1 text-gray-600 text-sm">{f.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
-      {/* Preço */}
-      <section className="bg-blue-50 py-12">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
-            Teste grátis por 7 dias
+
+      {/* ────────────────── CTA FINAL ────────────────── */}
+      <section className="bg-blue-600 py-16 text-center">
+        <div className="mx-auto max-w-2xl px-5">
+          <h2 className="text-2xl font-bold text-white md:text-3xl">
+            Comece a usar hoje. Gratis por 7 dias.
           </h2>
-          <p className="mt-3 text-gray-600">
-            Depois apenas <span className="font-bold text-blue-600">R$ 20/mês</span> • Sem fidelidade
+          <p className="mt-3 text-blue-100">
+            Sem cartao de credito. Sem burocracia. So resultados.
           </p>
-          <Button asChild className="mt-6 bg-blue-600 hover:bg-blue-700">
-            <Link to="/auth?mode=signup">Começar teste grátis</Link>
+          <Button asChild size="lg" className="mt-7 bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8">
+            <Link to="/auth?mode=signup">
+              Criar conta gratis <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </section>
-      {/* FAQ */}
-      <section className="mx-auto max-w-4xl px-6 py-14">
-        <h2 className="text-xl font-bold text-center text-gray-900 mb-6">
-          Dúvidas comuns
-        </h2>
-        <div className="divide-y divide-gray-200">
-          <div className="py-4">
-            <h3 className="font-medium text-gray-900">Como funciona o teste grátis?</h3>
-            <p className="text-gray-600 mt-1 text-sm">7 dias de acesso total sem custo. Depois, R$ 20/mês se quiser continuar.</p>
-          </div>
-          <div className="py-4">
-            <h3 className="font-medium text-gray-900">Como recebo alertas?</h3>
-            <p className="text-gray-600 mt-1 text-sm">Por email, automaticamente quando o documento estiver perto de vencer.</p>
-          </div>
-          <div className="py-4">
-            <h3 className="font-medium text-gray-900">Posso cancelar quando quiser?</h3>
-            <p className="text-gray-600 mt-1 text-sm">Sim, sem multas ou burocracia, direto pelo sistema.</p>
-          </div>
-        </div>
-      </section>
+
+      {/* ────────────────── FOOTER ────────────────── */}
+      <footer className="border-t border-gray-100 py-8 text-center text-xs text-gray-400">
+        <p>© 2025 Venciofy. Feito para quem nao tem tempo a perder.</p>
+      </footer>
     </div>
   );
 }

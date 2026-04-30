@@ -42,7 +42,7 @@ export default function Dashboard() {
   const upcoming = docs
     .map((d) => ({ d, s: getStatus(d.expiry_date) }))
     .filter(({ s }) => s.key !== "ok")
-    .slice(0, 12);
+    .slice(0, 3);
 
   const cards = [
     { label: "Vencidos", value: counts.expired, icon: AlertTriangle, accent: "expired" },
@@ -62,79 +62,202 @@ export default function Dashboard() {
     <div className="space-y-4">
       <div className="border-b border-border pb-3">
         <h1 className="text-xl font-semibold tracking-tight">Painel</h1>
-        <p className="text-xs text-muted-foreground">Visão geral dos vencimentos.</p>
+        <p className="text-xs text-muted-foreground">Visao geral dos vencimentos.</p>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Cards — 2 colunas mobile, 4 desktop */}
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {cards.map((c) => (
-          <div key={c.label} className={cn("flex items-center gap-3 rounded border border-border border-l-4 bg-card px-4 py-3", accentMap[c.accent])}>
-            <c.icon className="h-5 w-5" />
-            <div>
-              <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{c.label}</div>
-              <div className="text-2xl font-bold tabular-nums text-foreground">{c.value}</div>
+          <div
+            key={c.label}
+            className={cn(
+              "flex items-center gap-3 rounded border border-border border-l-4 bg-card px-3 py-3 sm:px-4",
+              accentMap[c.accent]
+            )}
+          >
+            <c.icon className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+            <div className="min-w-0">
+              <div className="text-[10px] font-medium uppercase leading-tight tracking-wide text-muted-foreground sm:text-[11px]">
+                {c.label}
+              </div>
+              <div className="text-xl font-bold tabular-nums text-foreground sm:text-2xl">
+                {c.value}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* Banner de alerta */}
       {counts.expired + counts.in7 > 0 && (
         <div className="flex items-start gap-2.5 rounded border border-status-attention/30 bg-status-attention-soft px-3 py-2.5 text-sm">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-attention" />
           <div>
-            <span className="font-semibold text-status-attention">{counts.expired + counts.in7} {counts.expired + counts.in7 === 1 ? "documento precisa" : "documentos precisam"} de atenção esta semana.</span>
+            <span className="font-semibold text-status-attention">
+              {counts.expired + counts.in7}{" "}
+              {counts.expired + counts.in7 === 1 ? "documento precisa" : "documentos precisam"} de
+              atencao esta semana.
+            </span>
             <span className="ml-1 text-foreground/70">Resolva agora para evitar multas.</span>
           </div>
         </div>
       )}
 
+      {/* Proximos vencimentos */}
       <div className="overflow-hidden rounded border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border bg-secondary/60 px-3 py-2">
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Próximos vencimentos</h2>
-          <Link to="/relatorios" className="text-[11px] font-medium text-primary hover:underline">Ver relatório completo</Link>
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Proximos vencimentos
+          </h2>
+          <Link to="/relatorios" className="text-[11px] font-medium text-primary hover:underline">
+            Ver relatorio completo
+          </Link>
         </div>
+
         {upcoming.length === 0 ? (
           <div className="p-8 text-center">
             <CheckCircle2 className="mx-auto h-8 w-8 text-status-ok" />
             <p className="mt-2 text-sm font-medium">Tudo em dia</p>
-            <p className="text-xs text-muted-foreground">Nenhum documento vencendo nos próximos 30 dias.</p>
+            <p className="text-xs text-muted-foreground">
+              Nenhum documento vencendo nos proximos 30 dias.
+            </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2 font-semibold">Status</th>
-                <th className="px-3 py-2 font-semibold">Documento</th>
-                <th className="px-3 py-2 font-semibold">Vínculo</th>
-                <th className="px-3 py-2 font-semibold">Vencimento</th>
-                <th className="px-3 py-2 font-semibold">Restante</th>
-                <th className="px-3 py-2"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
+          <>
+            {/* Mobile: cards */}
+            <div className="divide-y divide-border sm:hidden">
               {upcoming.map(({ d, s }) => {
                 const link = d.employee_id ? `/funcionarios/${d.employee_id}` : `/documentos-empresa`;
+                const statusLabel =
+                  s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : "ATENCAO";
                 return (
-                  <tr key={d.id} className="hover:bg-secondary/40">
-                    <td className="px-3 py-2">
-                      <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[11px] font-medium", s.className)}>
-                        <span className={cn("h-1.5 w-1.5 rounded-full", s.dotClass)} />
-                        {s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : "ATENÇÃO"}
+                  <Link
+                    key={d.id}
+                    to={link}
+                    className="flex items-start justify-between gap-3 px-3 py-3 hover:bg-secondary/40"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[11px] font-medium",
+                            s.className
+                          )}
+                        >
+                          <span className={cn("h-1.5 w-1.5 rounded-full", s.dotClass)} />
+                          {statusLabel}
+                        </span>
+                        <span className="truncate text-sm font-medium text-foreground">
+                          {d.name}
+                          {d.doc_type && (
+                            <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+                              ({d.doc_type})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {d.employee
+                          ? `${d.employee.full_name} — ${d.employee.companies?.name ?? ""}`
+                          : d.company?.name ?? ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Vence em{" "}
+                        <span className="font-medium text-foreground">
+                          {format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span
+                        className={cn(
+                          "whitespace-nowrap text-xs font-medium",
+                          s.key === "expired"
+                            ? "text-status-expired"
+                            : s.key === "attention"
+                            ? "text-status-attention"
+                            : "text-status-warning"
+                        )}
+                      >
+                        {formatDaysLeft(s.daysLeft)}
                       </span>
-                    </td>
-                    <td className="px-3 py-2 font-medium">{d.name}{d.doc_type && <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">({d.doc_type})</span>}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{d.employee ? `${d.employee.full_name} — ${d.employee.companies?.name ?? ""}` : `🏢 ${d.company?.name ?? ""}`}</td>
-                    <td className="px-3 py-2 tabular-nums">{format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}</td>
-                    <td className={cn("px-3 py-2 text-xs font-medium", s.key === "expired" ? "text-status-expired" : s.key === "attention" ? "text-status-attention" : "text-status-warning")}>
-                      {formatDaysLeft(s.daysLeft)}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <Link to={link} className="inline-flex items-center text-muted-foreground hover:text-primary"><ChevronRight className="h-4 w-4" /></Link>
-                    </td>
-                  </tr>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </Link>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Desktop: tabela */}
+            <table className="hidden w-full text-sm sm:table">
+              <thead className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 font-semibold">Status</th>
+                  <th className="px-3 py-2 font-semibold">Documento</th>
+                  <th className="px-3 py-2 font-semibold">Vinculo</th>
+                  <th className="px-3 py-2 font-semibold">Vencimento</th>
+                  <th className="px-3 py-2 font-semibold">Restante</th>
+                  <th className="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {upcoming.map(({ d, s }) => {
+                  const link = d.employee_id ? `/funcionarios/${d.employee_id}` : `/documentos-empresa`;
+                  return (
+                    <tr key={d.id} className="hover:bg-secondary/40">
+                      <td className="px-3 py-2">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[11px] font-medium",
+                            s.className
+                          )}
+                        >
+                          <span className={cn("h-1.5 w-1.5 rounded-full", s.dotClass)} />
+                          {s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : "ATENCAO"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 font-medium">
+                        {d.name}
+                        {d.doc_type && (
+                          <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">
+                            ({d.doc_type})
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {d.employee
+                          ? `${d.employee.full_name} — ${d.employee.companies?.name ?? ""}`
+                          : d.company?.name ?? ""}
+                      </td>
+                      <td className="px-3 py-2 tabular-nums">
+                        {format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}
+                      </td>
+                      <td
+                        className={cn(
+                          "px-3 py-2 text-xs font-medium",
+                          s.key === "expired"
+                            ? "text-status-expired"
+                            : s.key === "attention"
+                            ? "text-status-attention"
+                            : "text-status-warning"
+                        )}
+                      >
+                        {formatDaysLeft(s.daysLeft)}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <Link
+                          to={link}
+                          className="inline-flex items-center text-muted-foreground hover:text-primary"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
     </div>
