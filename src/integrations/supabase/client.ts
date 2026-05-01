@@ -24,35 +24,24 @@ export const supabase = createClient<Database>(
   }
 )
 
-// 👇 PROTEÇÃO AUTOMÁTICA DE SESSÃO (ESSA É A PARTE IMPORTANTE)
-supabase.auth.onAuthStateChange((event, session) => {
-  console.log('Auth event:', event)
+// Flag de ambiente (DEV ou produção)
+const isDev = import.meta.env.DEV
 
-  // Se a sessão morrer (refresh token inválido, expirado, logout em outro lugar etc)
+// 👇 PROTEÇÃO AUTOMÁTICA DE SESSÃO
+supabase.auth.onAuthStateChange((event, session) => {
+
+  // Logs apenas em desenvolvimento
+  if (isDev) {
+    console.log('Auth event:', event)
+  }
+
+  // Se a sessão morrer (logout, token inválido, etc)
   if (event === 'SIGNED_OUT') {
-    console.warn('Sessão perdida → redirecionando para login')
-    window.location.href = '/auth' // MUDE se sua rota for diferente
+
+    if (isDev) {
+      console.warn('Sessão perdida → redirecionando para login')
+    }
+
+    window.location.href = '/auth' // ajuste se necessário
   }
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
