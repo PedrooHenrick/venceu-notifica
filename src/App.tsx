@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "./pages/NotFound.tsx";
 import Landing from "./pages/Landing";
 import AuthPage from "./pages/Auth";
+import ResetPasswordPage from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
 import Employees from "./pages/Employees";
@@ -19,9 +20,9 @@ import { AuthProvider } from "./hooks/useAuth";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // não rebusca ao voltar para a aba
-      staleTime: 1000 * 60 * 5,   // dados ficam frescos por 5 minutos
-      retry: 1,                    // tenta só 1x em caso de erro
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
     },
   },
 });
@@ -36,6 +37,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/empresas" element={<Companies />} />
