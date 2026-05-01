@@ -283,7 +283,7 @@ export default function Landing() {
             Comece a usar hoje. Gratis por 7 dias.
           </h2>
           <p className="mt-3 text-blue-100">
-            Sem cartao de credito. Sem burocracia. So resultados.
+            Sem burocracia. So resultados.
           </p>
           <Button asChild size="lg" className="mt-7 bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8">
             <Link to="/auth?mode=signup">
