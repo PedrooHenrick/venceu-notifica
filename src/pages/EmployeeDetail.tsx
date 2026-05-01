@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getStatus, formatDaysLeft } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-const COMMON_TYPES = ["ASO", "NR-10", "NR-12", "NR-33", "NR-35", "NR-06 (EPI)", "Treinamento", "Exame Periodico", "Admissional", "Demissional", "Outro"];
+const COMMON_TYPES = ["ASO", "NR-10", "NR-12", "NR-33", "NR-35", "NR-06 (EPI)", "Treinamento", "Exame Periodico", "Admissional", "Demissional"];
 
 const schema = z.object({
   doc_type: z.string().trim().min(1, "Selecione o tipo do documento"),
@@ -42,6 +42,8 @@ export default function EmployeeDetail() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Doc | null>(null);
   const [form, setForm] = useState({ doc_type: "", issue_date: "", expiry_date: "", notes: "" });
+  const [customTypeInput, setCustomTypeInput] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   const { data: employee, isLoading: loadingEmployee } = useQuery<Employee | null>({
     queryKey: ["employee", id],
@@ -76,8 +78,29 @@ export default function EmployeeDetail() {
     queryClient.invalidateQueries({ queryKey: ["employees"] });
   };
 
-  const openNew = () => { setEditing(null); setForm({ doc_type: "", issue_date: "", expiry_date: "", notes: "" }); setOpen(true); };
-  const openEdit = (d: Doc) => { setEditing(d); setForm({ doc_type: d.doc_type ?? "", issue_date: d.issue_date ?? "", expiry_date: d.expiry_date, notes: d.notes ?? "" }); setOpen(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm({ doc_type: "", issue_date: "", expiry_date: "", notes: "" });
+    setCustomTypeInput("");
+    setShowCustomInput(false);
+    setOpen(true);
+  };
+
+  const openEdit = (d: Doc) => {
+    setEditing(d);
+    const isCustom = d.doc_type ? !COMMON_TYPES.includes(d.doc_type) : false;
+    setShowCustomInput(isCustom);
+    setCustomTypeInput(isCustom ? (d.doc_type ?? "") : "");
+    setForm({ doc_type: d.doc_type ?? "", issue_date: d.issue_date ?? "", expiry_date: d.expiry_date, notes: d.notes ?? "" });
+    setOpen(true);
+  };
+
+  const handleConfirmCustomType = () => {
+    const trimmed = customTypeInput.trim();
+    if (!trimmed) return;
+    setForm((prev) => ({ ...prev, doc_type: trimmed }));
+    setShowCustomInput(false);
+  };
 
   const submit = async () => {
     const parsed = schema.safeParse(form);
@@ -254,17 +277,74 @@ export default function EmployeeDetail() {
         </>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setShowCustomInput(false); setCustomTypeInput(""); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editing ? "Editar documento" : "Novo documento"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Tipo *</Label>
-              <Select value={form.doc_type} onValueChange={(v) => setForm({ ...form, doc_type: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
-                <SelectContent>{COMMON_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-              </Select>
+
+              {/* Input de tipo customizado */}
+              {showCustomInput ? (
+                <div className="flex gap-2 mt-1.5">
+                  <Input
+                    placeholder="Digite o tipo do documento..."
+                    value={customTypeInput}
+                    onChange={(e) => setCustomTypeInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleConfirmCustomType(); }}
+                    autoFocus
+                  />
+                  <Button size="sm" onClick={handleConfirmCustomType} disabled={!customTypeInput.trim()}>
+                    Ok
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setShowCustomInput(false); setCustomTypeInput(""); setForm((prev) => ({ ...prev, doc_type: "" })); }}>
+                    Voltar
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Select
+                    value={COMMON_TYPES.includes(form.doc_type) ? form.doc_type : ""}
+                    onValueChange={(v) => setForm({ ...form, doc_type: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={form.doc_type && !COMMON_TYPES.includes(form.doc_type) ? form.doc_type : "Selecione o tipo"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMON_TYPES.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                      {/* Botão de tipo personalizado no fim do dropdown */}
+                      <div className="px-2 pt-1 pb-1 border-t border-border mt-1">
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-primary hover:bg-secondary transition-colors"
+                          onClick={() => { setShowCustomInput(true); setForm((prev) => ({ ...prev, doc_type: "" })); }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Adicionar tipo personalizado
+                        </button>
+                      </div>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Badge mostrando tipo customizado já confirmado */}
+                  {form.doc_type && !COMMON_TYPES.includes(form.doc_type) && (
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-sm bg-secondary px-2 py-0.5 font-medium text-foreground">{form.doc_type}</span>
+                      <button
+                        type="button"
+                        className="hover:text-foreground transition-colors"
+                        onClick={() => { setShowCustomInput(true); setCustomTypeInput(form.doc_type); }}
+                      >
+                        editar
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div><Label>Data de emissao</Label><Input type="date" value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })} /></div>
               <div><Label>Data de vencimento *</Label><Input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} /></div>

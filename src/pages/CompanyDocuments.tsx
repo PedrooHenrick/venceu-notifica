@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { FileText, Plus, Pencil, Trash2, Search, ChevronRight } from "lucide-react";
+import { FileText, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getStatus, formatDaysLeft } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-const COMPANY_TYPES = ["AVCB", "Alvara Sanitario", "Alvara de Funcionamento", "Licenca Ambiental", "PPRA / PGR", "PCMSO", "LTCAT", "Laudo Eletrico", "SPDA", "Contrato", "Outro"];
+const COMPANY_TYPES = ["AVCB", "Alvara Sanitario", "Alvara de Funcionamento", "Licenca Ambiental", "PPRA / PGR", "PCMSO", "LTCAT", "Laudo Eletrico", "SPDA", "Contrato"];
 
 const schema = z.object({
   doc_type: z.string().trim().min(1, "Selecione o tipo do documento"),
@@ -36,6 +36,8 @@ export default function CompanyDocuments() {
   const [editing, setEditing] = useState<Doc | null>(null);
   const [form, setForm] = useState({ doc_type: "", company_id: "", issue_date: "", expiry_date: "", notes: "" });
   const [filter, setFilter] = useState("");
+  const [customTypeInput, setCustomTypeInput] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   const { data: list = [] } = useQuery<Doc[]>({
     queryKey: ["company-documents"],
@@ -63,8 +65,29 @@ export default function CompanyDocuments() {
     queryClient.invalidateQueries({ queryKey: ["companies"] });
   };
 
-  const openNew = () => { setEditing(null); setForm({ doc_type: "", company_id: companies[0]?.id ?? "", issue_date: "", expiry_date: "", notes: "" }); setOpen(true); };
-  const openEdit = (d: Doc) => { setEditing(d); setForm({ doc_type: d.doc_type ?? "", company_id: d.company_id ?? "", issue_date: d.issue_date ?? "", expiry_date: d.expiry_date, notes: d.notes ?? "" }); setOpen(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm({ doc_type: "", company_id: companies[0]?.id ?? "", issue_date: "", expiry_date: "", notes: "" });
+    setCustomTypeInput("");
+    setShowCustomInput(false);
+    setOpen(true);
+  };
+
+  const openEdit = (d: Doc) => {
+    setEditing(d);
+    const isCustom = d.doc_type ? !COMPANY_TYPES.includes(d.doc_type) : false;
+    setShowCustomInput(isCustom);
+    setCustomTypeInput(isCustom ? (d.doc_type ?? "") : "");
+    setForm({ doc_type: d.doc_type ?? "", company_id: d.company_id ?? "", issue_date: d.issue_date ?? "", expiry_date: d.expiry_date, notes: d.notes ?? "" });
+    setOpen(true);
+  };
+
+  const handleConfirmCustomType = () => {
+    const trimmed = customTypeInput.trim();
+    if (!trimmed) return;
+    setForm((prev) => ({ ...prev, doc_type: trimmed }));
+    setShowCustomInput(false);
+  };
 
   const submit = async () => {
     const parsed = schema.safeParse(form);
@@ -212,7 +235,7 @@ export default function CompanyDocuments() {
         </>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setShowCustomInput(false); setCustomTypeInput(""); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editing ? "Editar documento" : "Novo documento da empresa"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
@@ -223,13 +246,68 @@ export default function CompanyDocuments() {
                 <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+
             <div>
               <Label>Tipo *</Label>
-              <Select value={form.doc_type} onValueChange={(v) => setForm({ ...form, doc_type: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
-                <SelectContent>{COMPANY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-              </Select>
+
+              {showCustomInput ? (
+                <div className="flex gap-2 mt-1.5">
+                  <Input
+                    placeholder="Digite o tipo do documento..."
+                    value={customTypeInput}
+                    onChange={(e) => setCustomTypeInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleConfirmCustomType(); }}
+                    autoFocus
+                  />
+                  <Button size="sm" onClick={handleConfirmCustomType} disabled={!customTypeInput.trim()}>
+                    Ok
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setShowCustomInput(false); setCustomTypeInput(""); setForm((prev) => ({ ...prev, doc_type: "" })); }}>
+                    Voltar
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Select
+                    value={COMPANY_TYPES.includes(form.doc_type) ? form.doc_type : ""}
+                    onValueChange={(v) => setForm({ ...form, doc_type: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={form.doc_type && !COMPANY_TYPES.includes(form.doc_type) ? form.doc_type : "Selecione o tipo"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMPANY_TYPES.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                      <div className="px-2 pt-1 pb-1 border-t border-border mt-1">
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-primary hover:bg-secondary transition-colors"
+                          onClick={() => { setShowCustomInput(true); setForm((prev) => ({ ...prev, doc_type: "" })); }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Adicionar tipo personalizado
+                        </button>
+                      </div>
+                    </SelectContent>
+                  </Select>
+
+                  {form.doc_type && !COMPANY_TYPES.includes(form.doc_type) && (
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-sm bg-secondary px-2 py-0.5 font-medium text-foreground">{form.doc_type}</span>
+                      <button
+                        type="button"
+                        className="hover:text-foreground transition-colors"
+                        onClick={() => { setShowCustomInput(true); setCustomTypeInput(form.doc_type); }}
+                      >
+                        editar
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div><Label>Data de emissao</Label><Input type="date" value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })} /></div>
               <div><Label>Data de vencimento *</Label><Input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} /></div>
