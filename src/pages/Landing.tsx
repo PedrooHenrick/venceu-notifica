@@ -16,9 +16,11 @@ export default function Landing() {
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-              <span className="text-sm font-bold text-white">v</span>
-            </div>
+            <img
+              src="/images/android-chrome-192x192.png"
+              alt="Venciofy"
+              className="h-8 w-8 rounded-lg"
+             />
             <span className="text-lg font-bold tracking-tight text-gray-900">Venciofy</span>
           </div>
           <div className="flex items-center gap-2">
