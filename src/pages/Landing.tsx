@@ -1,9 +1,5 @@
 import { Link, Navigate } from "react-router-dom";
-import {
-  BellRing, CalendarClock, ArrowRight, CheckCircle2,
-  Building2, Users, Mail, Clock, Gift, CreditCard, ShieldCheck, Zap
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, BellRing, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Landing() {
@@ -11,293 +7,541 @@ export default function Landing() {
   if (!loading && user) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div className="min-h-screen bg-white font-sans">
-      {/* ────────────────── HEADER ────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="/images/android-chrome-192x192.png"
-              alt="Venciofy"
-              className="h-8 w-8 rounded-lg"
-             />
-            <span className="text-lg font-bold tracking-tight text-gray-900">Venciofy</span>
+    <div
+      className="min-h-screen font-sans"
+      style={{
+        fontFamily: "'Georgia', 'Times New Roman', serif",
+        background: "#fafaf8",
+        color: "#1a1a1a",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap');
+
+        * { box-sizing: border-box; }
+
+        .vf-serif { font-family: 'Playfair Display', Georgia, serif; }
+        .vf-sans { font-family: 'DM Sans', sans-serif; }
+
+        .vf-hero-word {
+          display: inline-block;
+          position: relative;
+        }
+        .vf-hero-word::after {
+          content: '';
+          position: absolute;
+          bottom: 4px;
+          left: 0;
+          width: 100%;
+          height: 3px;
+          background: #2563eb;
+        }
+
+        .vf-step-num {
+          font-family: 'Playfair Display', serif;
+          font-size: 80px;
+          font-weight: 900;
+          line-height: 1;
+          color: #e8e8e4;
+          position: absolute;
+          top: -20px;
+          left: -10px;
+          z-index: 0;
+          user-select: none;
+        }
+
+        .vf-tag {
+          display: inline-block;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #2563eb;
+          border-top: 2px solid #2563eb;
+          padding-top: 6px;
+          margin-bottom: 20px;
+        }
+
+        .vf-nav-link {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          color: #444;
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+        .vf-nav-link:hover { color: #111; }
+
+        .vf-btn-primary {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          background: #1a1a1a;
+          color: #fff;
+          border: none;
+          padding: 14px 28px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: background 0.2s, transform 0.15s;
+          text-decoration: none;
+        }
+        .vf-btn-primary:hover {
+          background: #2563eb;
+          transform: translateY(-1px);
+        }
+
+        .vf-btn-ghost {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          background: transparent;
+          color: #444;
+          border: 1px solid #d0d0c8;
+          padding: 13px 24px;
+          cursor: pointer;
+          transition: border-color 0.2s, color 0.2s;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+        }
+        .vf-btn-ghost:hover { border-color: #888; color: #111; }
+
+        .vf-divider {
+          width: 40px;
+          height: 2px;
+          background: #1a1a1a;
+          margin: 20px 0;
+        }
+
+        .vf-float-card {
+          position: absolute;
+          background: #fff;
+          border: 1px solid #e0e0d8;
+          padding: 14px 18px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+          min-width: 210px;
+        }
+
+        .vf-feature-card {
+          border-top: 1px solid #ddd;
+          padding: 28px 0;
+          display: grid;
+          grid-template-columns: 48px 1fr;
+          gap: 20px;
+          align-items: start;
+        }
+
+        /* ── HERO GRID ── */
+        .vf-hero-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 80px;
+          align-items: center;
+        }
+
+        /* ── PROBLEMA GRID ── */
+        .vf-problem-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          margin-top: 48px;
+          border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .vf-problem-item {
+          padding: 32px;
+          border-right: 1px solid rgba(255,255,255,0.08);
+        }
+        .vf-problem-item:last-child {
+          border-right: none;
+        }
+
+        /* ── COMO FUNCIONA GRID ── */
+        .vf-howto-grid {
+          display: grid;
+          grid-template-columns: 240px 1fr;
+          gap: 80px;
+          align-items: start;
+        }
+
+        .vf-howto-sticky {
+          position: sticky;
+          top: 80px;
+        }
+
+        /* ── FEATURES GRID ── */
+        .vf-features-grid {
+          columns: 2;
+          gap: 0;
+        }
+
+        .vf-step-card {
+          padding: 40px 32px 36px;
+          background: #fff;
+          border: 1px solid #e8e8e0;
+          position: relative;
+          overflow: hidden;
+          transition: box-shadow 0.2s;
+        }
+        .vf-step-card:hover {
+          box-shadow: 0 8px 40px rgba(0,0,0,0.07);
+        }
+
+        .vf-faq-item {
+          border-bottom: 1px solid #e0e0d8;
+          padding: 24px 0;
+        }
+
+        /* ──────────────────────────────
+           MOBILE
+        ────────────────────────────── */
+        @media (max-width: 768px) {
+
+          /* Hero: empilha texto em cima, imagem embaixo */
+          .vf-hero-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+
+          /* Esconde float cards e o bloco de fundo decorativo */
+          .vf-float-card { display: none; }
+          .vf-hero-bg-deco { display: none; }
+
+          /* Imagem ocupa largura total */
+          .vf-hero-img {
+            height: 260px !important;
+          }
+
+          /* Problema: 1 coluna */
+          .vf-problem-grid {
+            grid-template-columns: 1fr;
+          }
+          .vf-problem-item {
+            border-right: none;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+          }
+          .vf-problem-item:last-child {
+            border-bottom: none;
+          }
+
+          /* Como funciona: 1 coluna, sem sticky */
+          .vf-howto-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+          }
+          .vf-howto-sticky {
+            position: static;
+          }
+
+          /* Features: 1 coluna */
+          .vf-features-grid {
+            columns: 1;
+          }
+
+          /* Step cards: menos padding */
+          .vf-step-card {
+            padding: 32px 24px 28px;
+          }
+
+          /* Botões hero: empilha */
+          .vf-hero-actions {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .vf-btn-primary,
+          .vf-btn-ghost {
+            justify-content: center;
+            text-align: center;
+          }
+
+          /* Footer */
+          .vf-footer {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+          }
+        }
+      `}</style>
+
+      {/* ── HEADER ── */}
+      <header style={{
+        position: "sticky", top: 0, zIndex: 50,
+        borderBottom: "1px solid #e0e0d8",
+        background: "rgba(250,250,248,0.95)",
+        backdropFilter: "blur(8px)",
+      }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src="/images/android-chrome-192x192.png" alt="UniDatas" style={{ height: 28, width: 28, borderRadius: 6 }} />
+            <span className="vf-serif" style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#111" }}>UniDatas</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900 hidden sm:inline-flex">
-              <Link to="/auth">Entrar</Link>
-            </Button>
-            <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4">
-              <Link to="/auth?mode=signup">Testar gratis</Link>
-            </Button>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <Link to="/auth" className="vf-nav-link">Entrar</Link>
+            <Link to="/auth?mode=signup" className="vf-btn-primary" style={{ padding: "9px 18px", fontSize: 13 }}>
+              Testar gratis
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* ────────────────── HERO ────────────────── */}
-      <section className="mx-auto max-w-6xl px-5 pt-14 pb-10 md:pt-20 md:pb-16">
-        <div className="grid items-center gap-12 md:grid-cols-2">
-          {/* Texto */}
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700">
-              <Gift className="h-3.5 w-3.5" />
-              7 dias gratis, sem cartao
-            </div>
+      {/* ── HERO ── */}
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "64px 20px 56px" }}>
+        <div className="vf-hero-grid">
 
-            <h1 className="mt-5 text-[2rem] font-extrabold leading-[1.15] tracking-tight text-gray-900 md:text-[2.75rem]">
-              Chega de levar multa<br />
-              por <span className="text-blue-600">documento vencido.</span>
+          <div>
+            <span className="vf-tag">Controle de documentos</span>
+
+            <h1 className="vf-serif" style={{
+              fontSize: "clamp(2.2rem, 5vw, 3.5rem)",
+              fontWeight: 900,
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+              color: "#111",
+              margin: 0,
+            }}>
+              Documentos vencidos
+              <br />
+              custam caro.{" "}
+              <span className="vf-hero-word" style={{ color: "#2563eb" }}>Literalmente.</span>
             </h1>
 
-            <p className="mt-4 text-base leading-relaxed text-gray-500 md:text-lg">
-              Cadastre funcionarios e documentos uma vez.
-              O Venciofy avisa antes de vencer — por email, automaticamente.
+            <div className="vf-divider" />
+
+            <p className="vf-sans" style={{ fontSize: 16, color: "#555", lineHeight: 1.75, marginTop: 0, maxWidth: 440 }}>
+              Cadastre seus funcionários e documentos uma vez.
+              O Unidatas te avisa por email antes de qualquer prazo vencer — sem planilha, sem surpresa.
             </p>
 
-            <div className="mt-6 inline-flex flex-col rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
-              <span className="text-2xl font-extrabold text-gray-900">
-                R$ 20<span className="text-base font-normal text-gray-500">/mes</span>
-              </span>
-              <span className="mt-0.5 text-sm text-gray-500">Cancele quando quiser. Sem fidelidade.</span>
+            <div className="vf-hero-actions" style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
+              <Link to="/auth?mode=signup" className="vf-btn-primary">
+                Testar gratis por 7 dias <ArrowRight size={15} />
+              </Link>
+              <Link to="/auth" className="vf-btn-ghost">
+                Ja tenho conta
+              </Link>
             </div>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white gap-2 px-6">
-                <Link to="/auth?mode=signup">
-                  Comecar teste gratis <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="gap-2">
-                <Link to="/auth">Ja tenho conta</Link>
-              </Button>
+            <p className="vf-sans" style={{ fontSize: 12, color: "#999", marginTop: 16 }}>
+              Sem cartao de credito. Cancele quando quiser.
+            </p>
+          </div>
+
+          {/* Imagem lado direito */}
+          <div style={{ position: "relative" }}>
+            <div className="vf-hero-bg-deco" style={{
+              position: "absolute",
+              top: -16, right: -16, bottom: -16, left: 16,
+              background: "#e8e8e0",
+              zIndex: 0,
+            }} />
+            <img
+              src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=700&h=500&fit=crop&q=80"
+              alt="Equipe de RH"
+              className="vf-hero-img"
+              style={{ width: "100%", height: 420, objectFit: "cover", display: "block", position: "relative", zIndex: 1 }}
+              loading="lazy"
+            />
+
+            <div className="vf-float-card" style={{ bottom: 32, left: -40, zIndex: 2 }}>
+              <div style={{ width: 36, height: 36, background: "#fff3e0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <BellRing size={16} color="#e65100" />
+              </div>
+              <div>
+                <p className="vf-sans" style={{ fontSize: 12, fontWeight: 600, color: "#111", margin: 0 }}>NR-10 vence em 3 dias</p>
+                <p className="vf-sans" style={{ fontSize: 11, color: "#888", margin: 0 }}>Joãozinho — Empresa ABC</p>
+              </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-4 text-sm text-gray-400">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" /> Sem cartao para testar</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" /> Cancele a qualquer momento</span>
+            <div className="vf-float-card" style={{ top: 32, right: -40, zIndex: 2 }}>
+              <div style={{ width: 36, height: 36, background: "#e8f5e9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <ShieldCheck size={16} color="#2e7d32" />
+              </div>
+              <div>
+                <p className="vf-sans" style={{ fontSize: 12, fontWeight: 600, color: "#111", margin: 0 }}>Tudo em dia</p>
+                <p className="vf-sans" style={{ fontSize: 11, color: "#888", margin: 0 }}>12 documentos ativos</p>
+              </div>
             </div>
           </div>
 
-          {/* Imagem + floating card */}
-          <div className="relative">
-            <div className="overflow-hidden rounded-2xl shadow-xl">
-              <img
-                src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=700&h=500&fit=crop&q=80"
-                alt="Equipe de RH organizando documentos"
-                className="h-72 w-full object-cover md:h-96"
-                loading="lazy"
-              />
-            </div>
-            {/* Card flutuante - alerta */}
-            <div className="absolute -bottom-4 -left-4 flex items-center gap-3 rounded-xl border border-orange-100 bg-white px-4 py-3 shadow-lg">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50">
-                <BellRing className="h-4 w-4 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-800">NR-10 vence em 3 dias</p>
-                <p className="text-[11px] text-gray-400">Joazinho — Empresa ABC</p>
-              </div>
-            </div>
-            {/* Card flutuante - ok */}
-            <div className="absolute -top-4 -right-4 hidden items-center gap-3 rounded-xl border border-green-100 bg-white px-4 py-3 shadow-lg sm:flex">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50">
-                <ShieldCheck className="h-4 w-4 text-green-500" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-800">Tudo em dia</p>
-                <p className="text-[11px] text-gray-400">12 documentos ativos</p>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* ────────────────── PROBLEMA ────────────────── */}
-      <section className="bg-gray-950 py-14">
-        <div className="mx-auto max-w-4xl px-5 text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">O problema real</p>
-          <h2 className="mt-3 text-2xl font-bold text-white md:text-3xl">
-            Quantas vezes voce ja passou por isso?
+      {/* ── LOGOS / PROVA SOCIAL ── */}
+      <div style={{ borderTop: "1px solid #e0e0d8", borderBottom: "1px solid #e0e0d8", padding: "18px 20px", textAlign: "center" }}>
+        <p className="vf-sans" style={{ fontSize: 12, color: "#aaa", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>
+          Usado por empresas que nao querem depender de planilha
+        </p>
+      </div>
+
+      {/* ── PROBLEMA ── */}
+      <section style={{ background: "#111", padding: "80px 0" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
+          <span className="vf-tag" style={{ color: "#6b8cff", borderColor: "#6b8cff" }}>O problema real</span>
+          <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 3vw, 2.6rem)", color: "#fff", fontWeight: 900, marginTop: 0, maxWidth: 560 }}>
+            Você conhece esse pesadelo?
           </h2>
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+
+          <div className="vf-problem-grid">
             {[
-              { emoji: "😰", text: "Levou multa por ASO vencido que estava numa planilha perdida" },
-              { emoji: "😤", text: "So descobriu que o NR venceu quando o fiscal apareceu na empresa" },
-              { emoji: "📋", text: "Tem que verificar manualmente dezenas de documentos toda semana" },
+              {
+                n: "01",
+                title: "A multa que poderia ter evitado",
+                text: "O ASO venceu numa planilha que ninguem abriu. O fiscal chegou primeiro.",
+              },
+              {
+                n: "02",
+                title: "Só descobriu tarde demais",
+                text: "O NR venceu meses atrás. Ninguem percebeu até o acidente.",
+              },
+              {
+                n: "03",
+                title: "Verificação manual toda semana",
+                text: "Dezenas de documentos, dezenas de datas, e tudo na memória de alguém.",
+              },
             ].map((item) => (
-              <div key={item.text} className="rounded-xl border border-white/10 bg-white/5 p-5 text-left">
-                <span className="text-2xl">{item.emoji}</span>
-                <p className="mt-3 text-sm leading-relaxed text-gray-300">{item.text}</p>
+              <div key={item.n} className="vf-problem-item">
+                <span className="vf-sans" style={{ fontSize: 11, color: "#666", letterSpacing: "0.1em" }}>{item.n}</span>
+                <h3 className="vf-serif" style={{ fontSize: 17, color: "#fff", fontWeight: 700, margin: "12px 0 10px", lineHeight: 1.3 }}>{item.title}</h3>
+                <p className="vf-sans" style={{ fontSize: 14, color: "#888", lineHeight: 1.65, margin: 0 }}>{item.text}</p>
               </div>
             ))}
           </div>
-          <p className="mt-8 text-base text-gray-400">
-            O Venciofy resolve isso. Uma vez cadastrado, o sistema cuida do resto.
-          </p>
         </div>
       </section>
 
-      {/* ────────────────── COMO FUNCIONA ────────────────── */}
-      <section className="mx-auto max-w-6xl px-5 py-16">
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">Como funciona</p>
-          <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">3 passos, sem complicacao</h2>
-        </div>
+      {/* ── COMO FUNCIONA ── */}
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "80px 20px" }}>
+        <div className="vf-howto-grid">
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {[
-            {
-              step: "01",
-              icon: Users,
-              title: "Cadastre funcionarios",
-              desc: "Adicione colaboradores com CPF, cargo e empresa em poucos cliques.",
-              img: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=250&fit=crop&q=80",
-              alt: "Pessoas em reuniao de trabalho"
-            },
-            {
-              step: "02",
-              icon: CalendarClock,
-              title: "Insira as DATAS",
-              desc: "ASO, NR-10, NR-33, AVCB — cadastre data de emissao e vencimento.",
-              img: "/images/doc2.png",
-              alt: "Documentos e contratos em mesa"
-            },
-            {
-              step: "03",
-              icon: Mail,
-              title: "Receba alertas",
-              desc: "Email automatico antes de vencer. Sem planilha, sem esquecimento.",
-              img: "/images/doc3.jpg",
-              alt: "Pessoa recebendo notificacao no celular"
-            },
-          ].map((item) => (
-            <div key={item.step} className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md">
-              <div className="overflow-hidden">
-                <img
-                  src={item.img}
-                  alt={item.alt}
-                  className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl font-black text-blue-100">{item.step}</span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
-                    <item.icon className="h-4 w-4 text-blue-600" />
-                  </div>
-                </div>
-                <h3 className="mt-2 text-base font-semibold text-gray-900">{item.title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-gray-500">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ────────────────── FEATURES ────────────────── */}
-      <section className="bg-blue-50 py-14">
-        <div className="mx-auto max-w-6xl px-5">
-          <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">Recursos</p>
-            <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">Tudo que voce precisa</h2>
+          <div className="vf-howto-sticky">
+            <span className="vf-tag">Como funciona</span>
+            <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.4rem)", fontWeight: 900, lineHeight: 1.2, color: "#111", margin: 0 }}>
+              Tres passos.<br />Pronto.
+            </h2>
+            <div className="vf-divider" />
+            <p className="vf-sans" style={{ fontSize: 14, color: "#777", lineHeight: 1.7 }}>
+              Sem treinamento, sem onboarding de 2 horas, sem suporte tecnico.
+            </p>
           </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {[
-              { icon: BellRing, title: "Alertas automaticos", desc: "Email antes de vencer. Nunca mais olhe planilha todo dia.", color: "bg-orange-100 text-orange-600" },
-              { icon: CalendarClock, title: "Painel visual", desc: "Vencidos, urgentes e a vencer num so lugar, tudo claro.", color: "bg-blue-100 text-blue-600" },
-              { icon: Building2, title: "Por empresa", desc: "Organize documentos por funcionario ou por empresa.", color: "bg-indigo-100 text-indigo-600" },
-              { icon: Zap, title: "Rapido de usar", desc: "Cadastre um funcionario em menos de 1 minuto.", color: "bg-yellow-100 text-yellow-600" },
-              { icon: ShieldCheck, title: "Seus dados protegidos", desc: "Hospedagem segura, seus dados nao sao compartilhados.", color: "bg-green-100 text-green-600" },
-              { icon: CreditCard, title: "Preço justo", desc: "R$ 20/mes. Menos que um almoco. Vale cada centavo.", color: "bg-pink-100 text-pink-600" },
+              {
+                n: "01",
+                title: "Cadastre os funcionarios",
+                desc: "Nome, CPF, cargo, empresa. Leva menos de um minuto por pessoa.",
+                detail: "Pode importar em massa se quiser — mas mesmo um a um vai rapido.",
+              },
+              {
+                n: "02",
+                title: "Insira as datas dos documentos",
+                desc: "ASO, NR-10, NR-33, AVCB, habilitacoes. Data de emissao e vencimento.",
+                detail: "So isso. Sem campo obrigatorio desnecessario.",
+              },
+              {
+                n: "03",
+                title: "Receba o alerta no email",
+                desc: "Antes de vencer, voce recebe um email automatico. Simples.",
+                detail: "Sem app para instalar, sem push notification, sem mais uma senha para lembrar.",
+              },
+            ].map((item) => (
+              <div key={item.n} className="vf-step-card">
+                <span className="vf-step-num">{item.n}</span>
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <h3 className="vf-serif" style={{ fontSize: 22, fontWeight: 700, color: "#111", margin: "0 0 10px" }}>{item.title}</h3>
+                  <p className="vf-sans" style={{ fontSize: 15, color: "#333", margin: "0 0 6px", lineHeight: 1.6 }}>{item.desc}</p>
+                  <p className="vf-sans" style={{ fontSize: 13, color: "#999", margin: 0, lineHeight: 1.6 }}>{item.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section style={{ background: "#f4f4f0", padding: "80px 0" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
+          <span className="vf-tag">O que tem dentro</span>
+          <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 900, color: "#111", marginTop: 0, marginBottom: 48, maxWidth: 400 }}>
+            Nada de feature inutil.
+          </h2>
+
+          <div className="vf-features-grid">
+            {[
+              {
+                label: "Alertas automaticos",
+                desc: "Email antes de vencer. Voce escolhe com quantos dias de antecedencia.",
+              },
+              {
+                label: "Painel de vencimentos",
+                desc: "Vencidos, urgentes e a vencer — tudo numa tela so, sem precisar filtrar.",
+              },
+              {
+                label: "Por empresa ou por funcionario",
+                desc: "Voce organiza do jeito que faz sentido pro seu processo.",
+              },
+              {
+                label: "Rapido de verdade",
+                desc: "Cadastre um funcionario do zero em menos de 1 minuto.",
+              },
+              {
+                label: "Seus dados sao seus",
+                desc: "Nada e compartilhado. Hospedagem segura, backup diario.",
+              },
+              {
+                label: "Roda no celular",
+                desc: "Sem app para instalar. Qualquer navegador, qualquer dispositivo.",
+              },
             ].map((f) => (
-              <div key={f.title} className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${f.color}`}>
-                  <f.icon className="h-4 w-4" />
+              <div key={f.label} className="vf-feature-card" style={{ breakInside: "avoid" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#1a1a1a", marginTop: 2, flexShrink: 0 }} />
+                <div>
+                  <h3 className="vf-serif" style={{ fontSize: 16, fontWeight: 700, color: "#111", margin: "0 0 6px" }}>{f.label}</h3>
+                  <p className="vf-sans" style={{ fontSize: 14, color: "#666", margin: 0, lineHeight: 1.65 }}>{f.desc}</p>
                 </div>
-                <h3 className="mt-3 text-sm font-semibold text-gray-900">{f.title}</h3>
-                <p className="mt-1 text-sm text-gray-500">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ────────────────── PRECO ────────────────── */}
-      <section className="mx-auto max-w-4xl px-5 py-16 text-center">
-        <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">Preço</p>
-        <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">Simples e transparente</h2>
+      {/* ── FAQ ── */}
+      <section style={{ maxWidth: 700, margin: "0 auto", padding: "80px 20px" }}>
+        <span className="vf-tag">Duvidas</span>
+        <h2 className="vf-serif" style={{ fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)", fontWeight: 900, color: "#111", marginTop: 0, marginBottom: 40 }}>
+          Perguntas diretas.<br />Respostas diretas.
+        </h2>
 
-        <div className="mx-auto mt-8 max-w-sm overflow-hidden rounded-2xl border-2 border-blue-600 bg-white shadow-lg">
-          <div className="bg-blue-600 py-3 text-sm font-semibold text-white">Plano unico • Sem surpresas</div>
-          <div className="px-8 py-8">
-            <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl font-extrabold text-gray-900">R$ 20</span>
-              <span className="text-gray-500">/mes</span>
-            </div>
-            <ul className="mt-6 space-y-3 text-sm text-gray-600">
-              {[
-                "Funcionarios e documentos ilimitados",
-                "Alertas por email automaticos",
-                "Painel de vencimentos",
-                "Relatorios exportaveis (CSV/PDF)",
-                "7 dias gratis para testar",
-                "Cancele quando quiser",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Button asChild className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white">
-              <Link to="/auth?mode=signup">Comecar teste gratis</Link>
-            </Button>
-            <p className="mt-3 text-xs text-gray-400">Sem cartao de credito para testar</p>
+        {[
+          { q: "Como funciona o teste gratis?", a: "7 dias de acesso completo sem precisar colocar cartao. Depois voce decide se continua." },
+          { q: "Como recebo os alertas?", a: "Por email, automaticamente. Voce configura quantos dias antes quer ser avisado." },
+          { q: "Posso cancelar quando quiser?", a: "Sim. Sem ligacao, sem form para preencher, sem justificativa. So cancela e acabou." },
+          { q: "Precisa instalar alguma coisa?", a: "Nao. Roda direto no navegador. Celular, tablet, computador — tanto faz." },
+          { q: "Quantos funcionarios posso cadastrar?", a: "Ilimitados. Nao tem limite por plano, nao tem cobranca por usuario adicional." },
+        ].map((item) => (
+          <div key={item.q} className="vf-faq-item">
+            <h3 className="vf-sans" style={{ fontSize: 15, fontWeight: 600, color: "#111", margin: "0 0 8px" }}>{item.q}</h3>
+            <p className="vf-sans" style={{ fontSize: 14, color: "#666", margin: 0, lineHeight: 1.7 }}>{item.a}</p>
           </div>
-        </div>
+        ))}
       </section>
 
-      {/* ────────────────── FAQ ────────────────── */}
-      <section className="border-t border-gray-100 bg-gray-50 py-14">
-        <div className="mx-auto max-w-2xl px-5">
-          <h2 className="text-center text-xl font-bold text-gray-900">Duvidas comuns</h2>
-          <div className="mt-8 divide-y divide-gray-200">
-            {[
-              { q: "Como funciona o teste gratis?", a: "7 dias de acesso total sem nenhum custo. Depois, R$ 20/mes se quiser continuar." },
-              { q: "Como recebo os alertas?", a: "Por email, automaticamente quando um documento estiver perto de vencer." },
-              { q: "Posso cancelar quando quiser?", a: "Sim, sem multa, sem burocracia, direto pelo sistema." },
-              { q: "Precisa instalar alguma coisa?", a: "Nao. O Venciofy roda direto no navegador, no celular ou computador." },
-            ].map((item) => (
-              <div key={item.q} className="py-5">
-                <h3 className="text-sm font-semibold text-gray-900">{item.q}</h3>
-                <p className="mt-1.5 text-sm text-gray-500">{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+    
 
-      {/* ────────────────── CTA FINAL ────────────────── */}
-      <section className="bg-blue-600 py-16 text-center">
-        <div className="mx-auto max-w-2xl px-5">
-          <h2 className="text-2xl font-bold text-white md:text-3xl">
-            Comece a usar hoje. Gratis por 7 dias.
-          </h2>
-          <p className="mt-3 text-blue-100">
-            Sem burocracia. So resultados.
-          </p>
-          <Button asChild size="lg" className="mt-7 bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8">
-            <Link to="/auth?mode=signup">
-              Criar conta gratis <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+    
+  
+      <footer className="vf-footer" style={{ borderTop: "1px solid #222", background: "#0a0a0a", padding: "28px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <img src="/images/android-chrome-192x192.png" alt="UniDatas" style={{ height: 22, width: 22, borderRadius: 4, opacity: 0.7 }} />
+          <span className="vf-sans" style={{ fontSize: 13, color: "#555" }}>UniDatas</span>
         </div>
-      </section>
-
-      {/* ────────────────── FOOTER ────────────────── */}
-      <footer className="border-t border-gray-100 py-8 text-center text-xs text-gray-400">
-        <p>© 2025 Venciofy. Feito para quem nao tem tempo a perder.</p>
+        <p className="vf-sans" style={{ fontSize: 12, color: "#444", margin: 0 }}>
+          © 2025 unidatas. Feito para quem nao tem tempo a perder.
+        </p>
       </footer>
     </div>
   );

@@ -92,10 +92,10 @@ export default function AuthPage() {
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
           <img
             src="/images/android-chrome-192x192.png"
-            alt="Venciofy"
+            alt="UniDatas"
             className="h-10 w-10 rounded-xl shadow-soft"
           />
-          <span className="font-bold tracking-tight">Venciofy</span>
+          <span className="font-bold tracking-tight">UniDatas</span>
         </Link>
 
         <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
