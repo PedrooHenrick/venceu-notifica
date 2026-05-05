@@ -112,75 +112,6 @@ function FeedbackModal({ open, onClose }: { open: boolean; onClose: () => void }
   );
 }
 
-// ─── Modal Cancelar Plano ─────────────────────────────────────
-function CancelPlanModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [loading, setLoading] = useState(false);
-
-  const handleCancel = async () => {
-    setLoading(true);
-    try {
-      const res = await callFunction("cancel-subscription");
-      if (res.ok) {
-        onClose();
-        toast.success("Plano cancelado. Seu acesso continua até o fim do período.");
-      } else {
-        const data = await res.json();
-        toast.error(data?.error ?? "Erro ao cancelar plano. Tente novamente.");
-      }
-    } catch {
-      toast.error("Erro ao cancelar plano. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal open={open} onClose={onClose}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <XCircle className="h-5 w-5 text-status-attention" />
-          <h2 className="text-base font-semibold">Cancelar plano</h2>
-        </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      <p className="text-sm text-muted-foreground mb-1">
-        Tem certeza que deseja cancelar sua assinatura?
-      </p>
-      <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-        <li className="flex items-start gap-2">
-          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
-          Seu acesso continua até o fim do período pago.
-        </li>
-        <li className="flex items-start gap-2">
-          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
-          Você não será cobrado novamente.
-        </li>
-        <li className="flex items-start gap-2">
-          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
-          Seus dados ficam salvos por 30 dias após o cancelamento.
-        </li>
-      </ul>
-      <div className="flex justify-end gap-2 mt-6">
-        <button
-          onClick={onClose}
-          className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors"
-        >
-          Manter plano
-        </button>
-        <button
-          onClick={handleCancel}
-          disabled={loading}
-          className="rounded-lg bg-status-attention px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition-colors"
-        >
-          {loading ? "Cancelando..." : "Sim, cancelar plano"}
-        </button>
-      </div>
-    </Modal>
-  );
-}
-
 // ─── Modal Excluir Conta ──────────────────────────────────────
 function DeleteAccountModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [confirm, setConfirm] = useState("");
@@ -253,11 +184,9 @@ function DeleteAccountModal({ open, onClose }: { open: boolean; onClose: () => v
 // ─── Botão Flutuante ──────────────────────────────────────────
 function FloatingMenu({
   onFeedback,
-  onCancelPlan,
   onDeleteAccount,
 }: {
   onFeedback: () => void;
-  onCancelPlan: () => void;
   onDeleteAccount: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -278,13 +207,6 @@ function FloatingMenu({
         >
           <MessageSquare className="h-4 w-4 text-primary" />
           Enviar feedback
-        </button>
-        <button
-          onClick={() => { onCancelPlan(); setOpen(false); }}
-          className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-lg hover:bg-secondary transition-colors whitespace-nowrap"
-        >
-          <XCircle className="h-4 w-4 text-status-attention" />
-          Cancelar plano
         </button>
         <button
           onClick={() => { onDeleteAccount(); setOpen(false); }}
@@ -315,7 +237,6 @@ function FloatingMenu({
 export default function Dashboard() {
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [cancelPlanOpen, setCancelPlanOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
 
   useEffect(() => {
@@ -510,13 +431,11 @@ export default function Dashboard() {
       {/* ── Botão flutuante ── */}
       <FloatingMenu
         onFeedback={() => setFeedbackOpen(true)}
-        onCancelPlan={() => setCancelPlanOpen(true)}
         onDeleteAccount={() => setDeleteAccountOpen(true)}
       />
 
       {/* ── Modais ── */}
       <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
-      <CancelPlanModal open={cancelPlanOpen} onClose={() => setCancelPlanOpen(false)} />
       <DeleteAccountModal open={deleteAccountOpen} onClose={() => setDeleteAccountOpen(false)} />
     </>
   );
