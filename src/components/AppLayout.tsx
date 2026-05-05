@@ -1,14 +1,10 @@
-import { useState, useEffect } from "react";
-import { NavLink, Outlet, useNavigate, useSearchParams } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, FileText, BarChart3, LogOut, ShieldCheck, Lock, Loader2, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Building2, Users, FileText, BarChart3, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
-
-const PRODUCTION_URL = "https://unidatas.com.br";
 
 const nav = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
@@ -18,147 +14,9 @@ const nav = [
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
 ];
 
-function PaymentSuccess() {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 backdrop-blur-sm bg-background/60" />
-      <div className="relative z-10 mx-4 w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-2xl">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle2 className="h-7 w-7 text-green-600" />
-        </div>
-        <h2 className="text-xl font-semibold tracking-tight">Pagamento confirmado!</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Seu plano está sendo ativado. Aguarde alguns instantes...
-        </p>
-        <div className="mt-6 flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Paywall({ userEmail, userId }: { userEmail: string; userId: string }) {
-  const [loading, setLoading] = useState(false);
-
-  const handleCheckout = async () => {
-    try {
-      setLoading(true);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) throw new Error("Usuário não autenticado");
-
-      const response = await fetch(
-        "https://wcopsrcnxzdwrbhykmgu.supabase.co/functions/v1/create-checkout-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            priceId: import.meta.env.VITE_STRIPE_PRICE_ID,
-            customerEmail: userEmail,
-            clientReferenceId: userId,
-            successUrl: `${PRODUCTION_URL}/dashboard?payment=success`,
-            cancelUrl: `${PRODUCTION_URL}/dashboard?payment=canceled`,
-          }),
-        }
-      );
-
-      const { url, error } = await response.json();
-      if (error) throw new Error(error);
-      if (!url) throw new Error("URL não retornada");
-
-      window.location.href = url;
-
-    } catch (err: any) {
-      console.error(err);
-      alert("Erro ao abrir o checkout. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 backdrop-blur-sm bg-background/60" />
-      <div className="relative z-10 mx-4 w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-2xl">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-          <Lock className="h-7 w-7 text-primary" />
-        </div>
-
-        <h2 className="text-xl font-semibold tracking-tight">Seu período gratuito encerrou</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Seus 7 dias grátis chegaram ao fim. Para continuar usando o sistema sem interrupções, assine o plano mensal.
-        </p>
-
-        <div className="my-6 rounded-lg border border-border bg-secondary/50 p-4">
-          <div className="text-3xl font-bold text-foreground">
-            R$ 20
-            <span className="text-base font-normal text-muted-foreground">/mês</span>
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Acesso completo · Renovação automática · Cancele quando quiser
-          </p>
-        </div>
-
-        <Button className="w-full" size="lg" onClick={handleCheckout} disabled={loading}>
-          {loading ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aguarde...</>
-          ) : (
-            "Assinar agora — R$ 20/mês"
-          )}
-        </Button>
-
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Pagamento seguro via Stripe · Cartão de crédito
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function AppLayout() {
   const { user, signOut } = useAuth();
-  const { isBlocked, isTrial, daysLeft } = useSubscription();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const queryClient = useQueryClient();
-  const paymentStatus = searchParams.get("payment");
-
-  useEffect(() => {
-    if (paymentStatus === "success") {
-      // Fica verificando o banco a cada 3s até o webhook ativar a assinatura
-      const interval = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: ["subscription"] });
-      }, 3000);
-
-      // Para de verificar após 30s e limpa a URL
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-        navigate("/dashboard", { replace: true });
-      }, 30000);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
-    }
-
-    if (paymentStatus === "canceled") {
-      // Remove o parâmetro da URL silenciosamente
-      navigate("/dashboard", { replace: true });
-    }
-  }, [paymentStatus]);
-
-  // Quando assinatura ativar, limpa a URL
-  useEffect(() => {
-    if (!isBlocked && paymentStatus === "success") {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [isBlocked, paymentStatus]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -169,11 +27,6 @@ export default function AppLayout() {
             <span className="text-[15px] font-semibold tracking-tight">UniDatas</span>
           </div>
           <div className="flex items-center gap-3">
-            {isTrial && (
-              <span className="hidden rounded-sm bg-amber-500/20 px-2 py-0.5 text-[11px] font-medium text-amber-200 sm:inline">
-                {daysLeft} {daysLeft === 1 ? "dia" : "dias"} grátis restantes
-              </span>
-            )}
             <span className="hidden text-xs text-primary-foreground/80 sm:inline">{user?.email}</span>
             <Button
               size="sm"
@@ -186,12 +39,6 @@ export default function AppLayout() {
           </div>
         </div>
       </header>
-
-      {isTrial && daysLeft <= 3 && (
-        <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-center text-xs text-amber-700 dark:text-amber-300">
-          ⚠️ Seu período gratuito encerra em <strong>{daysLeft} {daysLeft === 1 ? "dia" : "dias"}</strong>. Assine para continuar usando sem interrupções.
-        </div>
-      )}
 
       <div className="mx-auto flex max-w-[1400px]">
         <aside className="hidden w-56 shrink-0 border-r border-border bg-card md:block">
@@ -220,17 +67,6 @@ export default function AppLayout() {
           <div className="px-4 py-5 pb-24 md:px-6 md:py-6">
             <Outlet />
           </div>
-
-          {/* Tela de sucesso aguardando webhook */}
-          {paymentStatus === "success" && isBlocked && <PaymentSuccess />}
-
-          {/* Paywall normal */}
-          {isBlocked && paymentStatus !== "success" && (
-            <Paywall
-              userEmail={user?.email ?? ""}
-              userId={user?.id ?? ""}
-            />
-          )}
         </main>
       </div>
 
