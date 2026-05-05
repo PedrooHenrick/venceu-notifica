@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 
-const PRODUCTION_URL = "https://venciofy.com.br";
+const PRODUCTION_URL = "https://unidatas.com.br";
 
 const nav = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
@@ -166,7 +166,7 @@ export default function AppLayout() {
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-2.5">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5" />
-            <span className="text-[15px] font-semibold tracking-tight">Venciofy</span>
+            <span className="text-[15px] font-semibold tracking-tight">UniDatas</span>
           </div>
           <div className="flex items-center gap-3">
             {isTrial && (
