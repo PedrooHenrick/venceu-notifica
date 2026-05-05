@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getStatus, formatDaysLeft } from "@/lib/status";
 import { cn } from "@/lib/utils";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 interface Row {
   id: string;
@@ -15,6 +17,13 @@ interface Row {
   employee?: { full_name: string; companies: { name: string } } | null;
   company?: { name: string } | null;
 }
+
+const STATUS_META: Record<string, { label: string; bg: string; font: string }> = {
+  expired:   { label: "Vencido",        bg: "FFFDE8E8", font: "FFC0392B" },
+  attention: { label: "Urgente (7d)",   bg: "FFFFF3CD", font: "FFD97706" },
+  warning:   { label: "A vencer (30d)", bg: "FFFFF8E1", font: "FFB45309" },
+  ok:        { label: "Em dia",         bg: "FFE8F5E9", font: "FF2E7D32" },
+};
 
 export default function Reports() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -43,19 +52,66 @@ export default function Reports() {
     return true;
   }), [rows, statusFilter, companyFilter, companies]);
 
-  const exportCSV = () => {
-    const header = ["Empresa", "Funcionario", "Documento", "Vencimento", "Dias restantes", "Status"];
-    const lines = filtered.map((r) => {
-      const s = getStatus(r.expiry_date);
-      const company = r.employee?.companies?.name ?? r.company?.name ?? "";
-      const employee = r.employee?.full_name ?? "—";
-      return [company, employee, r.name, format(new Date(r.expiry_date), "dd/MM/yyyy"), s.daysLeft, s.label];
+  const exportExcel = async () => {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "DocVence";
+    const ws = wb.addWorksheet("Vencimentos");
+
+    // ── Colunas ────────────────────────────────────────────────
+    ws.columns = [
+      { header: "EMPRESA",      key: "empresa",     width: 36 },
+      { header: "FUNCIONÁRIO",  key: "funcionario", width: 28 },
+      { header: "DOCUMENTO",    key: "documento",   width: 34 },
+      { header: "VENCIMENTO",   key: "vencimento",  width: 14 },
+      { header: "DIAS",         key: "dias",        width: 10 },
+      { header: "STATUS",       key: "status",      width: 18 },
+    ];
+
+    // ── Estilo do cabeçalho ────────────────────────────────────
+    const headerRow = ws.getRow(1);
+    headerRow.height = 22;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" }, name: "Arial", size: 10 };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A5F" } };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = { bottom: { style: "thin", color: { argb: "FFAAAAAA" } } };
     });
-    const csv = [header, ...lines].map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `vencimentos-${Date.now()}.csv`; a.click();
-    URL.revokeObjectURL(url);
+
+    // ── Linhas de dados ────────────────────────────────────────
+    filtered.forEach((r, idx) => {
+      const s = getStatus(r.expiry_date);
+      const meta = STATUS_META[s.key] ?? STATUS_META.ok;
+
+      const row = ws.addRow({
+        empresa:     r.employee?.companies?.name ?? r.company?.name ?? "",
+        funcionario: r.employee?.full_name ?? "—",
+        documento:   r.name,
+        vencimento:  format(new Date(r.expiry_date), "dd/MM/yyyy"),
+        dias:        s.daysLeft,
+        status:      meta.label,
+      });
+
+      row.height = 18;
+      const rowBg = idx % 2 === 0 ? "FFFFFFFF" : "FFF7F9FC";
+
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        cell.font = { name: "Arial", size: 10, color: { argb: "FF1A1A1A" } };
+        cell.alignment = { vertical: "middle", horizontal: colNumber === 5 ? "center" : "left" };
+        cell.border = { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } };
+
+        if (colNumber === 6) {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: meta.bg } };
+          cell.font = { name: "Arial", size: 10, bold: true, color: { argb: meta.font } };
+        } else {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: rowBg } };
+        }
+      });
+    });
+
+    // ── Gerar e baixar ─────────────────────────────────────────
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    saveAs(blob, `vencimentos-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
   };
 
   const exportPDF = () => window.print();
@@ -87,8 +143,12 @@ export default function Reports() {
           </SelectContent>
         </Select>
         <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">
-          <Button size="sm" variant="outline" onClick={exportCSV} className="h-8 flex-1 gap-1.5 sm:flex-none"><FileSpreadsheet className="h-3.5 w-3.5" />Excel/CSV</Button>
-          <Button size="sm" variant="outline" onClick={exportPDF} className="h-8 flex-1 gap-1.5 sm:flex-none"><FileIcon className="h-3.5 w-3.5" />PDF</Button>
+          <Button size="sm" variant="outline" onClick={exportExcel} className="h-8 flex-1 gap-1.5 sm:flex-none">
+            <FileSpreadsheet className="h-3.5 w-3.5" />Excel
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportPDF} className="h-8 flex-1 gap-1.5 sm:flex-none">
+            <FileIcon className="h-3.5 w-3.5" />PDF
+          </Button>
         </div>
       </div>
 
