@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileSpreadsheet, FileText as FileIcon } from "lucide-react";
+import { FileSpreadsheet, FileText as FileIcon, ChevronDown, ChevronUp, Building2, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,62 +25,220 @@ const STATUS_STYLE: Record<string, { bg: string; font: string; label: string }> 
   ok:        { bg: "FFE8F5E9", font: "FF2E7D32", label: "Em dia" },
 };
 
-// ── Helpers de estilo ──────────────────────────────────────────
-function headerStyle(bg: string): Partial<ExcelJS.Style> {
-  return {
-    font: { bold: true, color: { argb: "FFFFFFFF" }, name: "Arial", size: 10 },
-    fill: { type: "pattern", pattern: "solid", fgColor: { argb: bg } },
-    alignment: { horizontal: "center", vertical: "middle", wrapText: true },
-    border: {
-      bottom: { style: "medium", color: { argb: "FFAAAAAA" } },
-      right:  { style: "thin",   color: { argb: "FFDDDDDD" } },
-    },
+// ── Badge de status ────────────────────────────────────────────
+function StatusBadge({ statusKey, daysLeft }: { statusKey: string; daysLeft: number }) {
+  const map: Record<string, { label: string; className: string }> = {
+    expired:   { label: "VENCIDO",  className: "bg-red-100 text-red-700 border border-red-200" },
+    attention: { label: "ATENCAO",  className: "bg-amber-100 text-amber-700 border border-amber-200" },
+    warning:   { label: "A VENCER", className: "bg-yellow-100 text-yellow-700 border border-yellow-200" },
+    ok:        { label: "EM DIA",   className: "bg-emerald-100 text-emerald-700 border border-emerald-200" },
   };
+  const s = map[statusKey] ?? map.ok;
+  return (
+    <span className={cn("inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap", s.className)}>
+      {s.label}
+    </span>
+  );
 }
 
-function companyRowStyle(): Partial<ExcelJS.Style> {
-  return {
-    font: { bold: true, color: { argb: "FFFFFFFF" }, name: "Arial", size: 11 },
-    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A5F" } },
-    alignment: { horizontal: "left", vertical: "middle" },
+// ── Célula de documento (data + status) ───────────────────────
+function DocCell({ doc }: { doc: Row | undefined }) {
+  if (!doc) return <span className="text-muted-foreground/30 text-xs">—</span>;
+  const s = getStatus(doc.expiry_date);
+  const colorMap: Record<string, string> = {
+    expired:   "text-red-600",
+    attention: "text-amber-600",
+    warning:   "text-yellow-600",
+    ok:        "text-emerald-600",
   };
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span className={cn("text-xs font-medium tabular-nums", colorMap[s.key])}>
+        {format(new Date(doc.expiry_date), "dd/MM/yy")}
+      </span>
+      <StatusBadge statusKey={s.key} daysLeft={s.daysLeft} />
+    </div>
+  );
 }
 
-function employeeStyle(idx: number): Partial<ExcelJS.Style> {
-  const bg = idx % 2 === 0 ? "FFFFFFFF" : "FFF4F6FA";
-  return {
-    font: { bold: true, color: { argb: "FF1A1A1A" }, name: "Arial", size: 10 },
-    fill: { type: "pattern", pattern: "solid", fgColor: { argb: bg } },
-    alignment: { horizontal: "left", vertical: "middle" },
-    border: { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } },
-  };
+// ── Card mobile de funcionário ─────────────────────────────────
+function EmployeeMobileCard({ name, docs }: { name: string; docs: Record<string, Row> }) {
+  const [open, setOpen] = useState(false);
+  const docList = Object.entries(docs);
+  const hasIssue = docList.some(([, d]) => {
+    const s = getStatus(d.expiry_date);
+    return s.key === "expired" || s.key === "attention";
+  });
+
+  return (
+    <div className={cn("rounded border bg-card overflow-hidden", hasIssue ? "border-amber-200" : "border-border")}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between px-3 py-2.5 text-left"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground truncate">{name}</span>
+          {hasIssue && <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] text-muted-foreground">{docList.length} docs</span>
+          {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-border divide-y divide-border">
+          {docList.map(([docName, doc]) => {
+            const s = getStatus(doc.expiry_date);
+            return (
+              <div key={docName} className="flex items-center justify-between px-3 py-2 gap-3">
+                <span className="text-xs text-muted-foreground truncate flex-1">{docName}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs tabular-nums text-foreground">
+                    {format(new Date(doc.expiry_date), "dd/MM/yyyy")}
+                  </span>
+                  <StatusBadge statusKey={s.key} daysLeft={s.daysLeft} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
-function docCellStyle(statusKey: string, idx: number): Partial<ExcelJS.Style> {
-  const st = STATUS_STYLE[statusKey] ?? STATUS_STYLE.ok;
-  return {
-    font: { bold: false, color: { argb: st.font }, name: "Arial", size: 10 },
-    fill: { type: "pattern", pattern: "solid", fgColor: { argb: st.bg } },
-    alignment: { horizontal: "center", vertical: "middle" },
-    border: {
-      bottom: { style: "thin",   color: { argb: "FFE5E7EB" } },
-      right:  { style: "thin",   color: { argb: "FFDDDDDD" } },
-    },
-  };
+// ── Bloco de empresa (desktop) ─────────────────────────────────
+function CompanyBlock({
+  companyName,
+  employees,
+  docTypes,
+}: {
+  companyName: string;
+  employees: Record<string, Record<string, Row>>;
+  docTypes: string[];
+}) {
+  const empList = Object.entries(employees).sort(([a], [b]) => a.localeCompare(b));
+
+  return (
+    <div className="overflow-hidden rounded border border-border bg-card">
+      {/* Cabeçalho empresa */}
+      <div className="flex items-center gap-2 bg-[#1E3A5F] px-3 py-2">
+        <Building2 className="h-3.5 w-3.5 text-white/70 shrink-0" />
+        <span className="text-xs font-bold uppercase tracking-wide text-white">{companyName}</span>
+      </div>
+
+      {/* Tabela desktop */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="border-b border-border bg-secondary/40 text-left">
+            <tr>
+              <th className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap w-48">
+                Funcionário
+              </th>
+              {docTypes.map((dt) => (
+                <th key={dt} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center whitespace-nowrap max-w-[120px]">
+                  <span className="block truncate" title={dt}>{dt}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {empList.map(([empName, docs], idx) => (
+              <tr key={empName} className={cn(idx % 2 === 0 ? "bg-white" : "bg-secondary/20", "hover:bg-secondary/40")}>
+                <td className="px-3 py-2.5 font-medium text-sm whitespace-nowrap">{empName}</td>
+                {docTypes.map((dt) => (
+                  <td key={dt} className="px-2 py-2 text-center">
+                    <DocCell doc={docs[dt]} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Cards mobile */}
+      <div className="sm:hidden divide-y divide-border p-2 space-y-1.5">
+        {empList.map(([empName, docs]) => (
+          <EmployeeMobileCard key={empName} name={empName} docs={docs} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function emptyCellStyle(idx: number): Partial<ExcelJS.Style> {
-  const bg = idx % 2 === 0 ? "FFFFFFFF" : "FFF4F6FA";
-  return {
-    fill: { type: "pattern", pattern: "solid", fgColor: { argb: bg } },
-    alignment: { horizontal: "center", vertical: "middle" },
-    border: {
-      bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
-      right:  { style: "thin", color: { argb: "FFDDDDDD" } },
-    },
-  };
+// ── Bloco documentos da empresa ────────────────────────────────
+function CompanyDocsBlock({
+  companyName,
+  docs,
+  docTypes,
+}: {
+  companyName: string;
+  docs: Record<string, Row>;
+  docTypes: string[];
+}) {
+  return (
+    <div className="overflow-hidden rounded border border-border bg-card">
+      <div className="flex items-center gap-2 bg-[#2C4E80] px-3 py-2">
+        <Building2 className="h-3.5 w-3.5 text-white/70 shrink-0" />
+        <span className="text-xs font-bold uppercase tracking-wide text-white">{companyName}</span>
+        <span className="ml-1 text-[10px] text-white/50">(documentos da empresa)</span>
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="border-b border-border bg-secondary/40 text-left">
+            <tr>
+              {docTypes.map((dt) => (
+                <th key={dt} className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center whitespace-nowrap">
+                  {dt}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {docTypes.map((dt) => (
+                <td key={dt} className="px-2 py-3 text-center">
+                  <DocCell doc={docs[dt]} />
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile */}
+      <div className="sm:hidden divide-y divide-border">
+        {docTypes.map((dt) => {
+          const doc = docs[dt];
+          const s = doc ? getStatus(doc.expiry_date) : null;
+          return (
+            <div key={dt} className="flex items-center justify-between px-3 py-2 gap-3">
+              <span className="text-xs text-muted-foreground truncate flex-1">{dt}</span>
+              {doc && s ? (
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs tabular-nums text-foreground">
+                    {format(new Date(doc.expiry_date), "dd/MM/yyyy")}
+                  </span>
+                  <StatusBadge statusKey={s.key} daysLeft={s.daysLeft} />
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground/40">—</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
+// ══════════════════════════════════════════════════════════════
+// PÁGINA PRINCIPAL
+// ══════════════════════════════════════════════════════════════
 export default function Reports() {
   const [rows, setRows] = useState<Row[]>([]);
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
@@ -116,29 +274,25 @@ export default function Reports() {
     [rows, statusFilter, companyFilter, companies]
   );
 
-  const exportExcel = async () => {
-    const wb = new ExcelJS.Workbook();
-    wb.creator = "DocVence";
-
-    // ── Separar docs de funcionários e docs de empresa ──────────
+  // ── Agrupar dados ──────────────────────────────────────────
+  const { byCompanyEmp, byCompanyDocs, empDocTypes, compDocTypes } = useMemo(() => {
     const empDocs  = filtered.filter((r) => r.employee);
     const compDocs = filtered.filter((r) => !r.employee);
 
-    // ── Todos os tipos de doc únicos (viram colunas) ─────────────
     const empDocTypes  = [...new Set(empDocs.map((r) => r.name))].sort();
     const compDocTypes = [...new Set(compDocs.map((r) => r.name))].sort();
 
-    // ── Agrupar emp: empresa → funcionário → docs ────────────────
-    const byCompany: Record<string, Record<string, Record<string, Row>>> = {};
+    // empresa → funcionário → docName → Row
+    const byCompanyEmp: Record<string, Record<string, Record<string, Row>>> = {};
     empDocs.forEach((r) => {
       const comp = r.employee?.companies?.name ?? "Sem empresa";
       const emp  = r.employee?.full_name ?? "—";
-      if (!byCompany[comp]) byCompany[comp] = {};
-      if (!byCompany[comp][emp]) byCompany[comp][emp] = {};
-      byCompany[comp][emp][r.name] = r;
+      if (!byCompanyEmp[comp]) byCompanyEmp[comp] = {};
+      if (!byCompanyEmp[comp][emp]) byCompanyEmp[comp][emp] = {};
+      byCompanyEmp[comp][emp][r.name] = r;
     });
 
-    // ── Agrupar empresa → docs ───────────────────────────────────
+    // empresa → docName → Row
     const byCompanyDocs: Record<string, Record<string, Row>> = {};
     compDocs.forEach((r) => {
       const comp = r.company?.name ?? "Sem empresa";
@@ -146,121 +300,127 @@ export default function Reports() {
       byCompanyDocs[comp][r.name] = r;
     });
 
-    // ════════════════════════════════════════════════════════════
-    // ABA 1 — FUNCIONÁRIOS
-    // ════════════════════════════════════════════════════════════
-    const wsEmp = wb.addWorksheet("Funcionários");
+    return { byCompanyEmp, byCompanyDocs, empDocTypes, compDocTypes };
+  }, [filtered]);
 
-    // Largura das colunas
+  // ── Export Excel ───────────────────────────────────────────
+  const exportExcel = async () => {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "DocVence";
+
+    // ABA FUNCIONÁRIOS
+    const wsEmp = wb.addWorksheet("Funcionários");
     wsEmp.columns = [
       { key: "funcionario", width: 30 },
       ...empDocTypes.map((t) => ({ key: t, width: 18 })),
     ];
-
-    // Cabeçalho fixo
     const empHeader = wsEmp.addRow(["FUNCIONÁRIO", ...empDocTypes]);
     empHeader.height = 24;
-    empHeader.getCell(1).style = headerStyle("FF1E3A5F");
-    empDocTypes.forEach((_, i) => {
-      empHeader.getCell(i + 2).style = headerStyle("FF2C4E80");
+    empHeader.eachCell((cell, col) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" }, name: "Arial", size: 10 };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: col === 1 ? "FF1E3A5F" : "FF2C4E80" } };
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      cell.border = { bottom: { style: "medium", color: { argb: "FFAAAAAA" } }, right: { style: "thin", color: { argb: "FFDDDDDD" } } };
     });
 
-    // Linhas por empresa
-    Object.entries(byCompany).sort(([a], [b]) => a.localeCompare(b)).forEach(([compName, employees]) => {
-      // Linha da empresa (título)
+    Object.entries(byCompanyEmp).sort(([a], [b]) => a.localeCompare(b)).forEach(([compName, employees]) => {
       const compRow = wsEmp.addRow([compName.toUpperCase()]);
       compRow.height = 20;
-      // Mesclar da col 1 até última coluna de doc
-      const lastCol = empDocTypes.length + 1;
-      wsEmp.mergeCells(compRow.number, 1, compRow.number, lastCol);
-      compRow.getCell(1).style = companyRowStyle();
+      wsEmp.mergeCells(compRow.number, 1, compRow.number, empDocTypes.length + 1);
+      compRow.getCell(1).style = {
+        font: { bold: true, color: { argb: "FFFFFFFF" }, name: "Arial", size: 11 },
+        fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A5F" } },
+        alignment: { horizontal: "left", vertical: "middle" },
+      };
 
-      // Linhas dos funcionários
       Object.entries(employees).sort(([a], [b]) => a.localeCompare(b)).forEach(([empName, docs], empIdx) => {
-        const rowValues: (string)[] = [empName];
-        empDocTypes.forEach((docType) => {
-          const doc = docs[docType];
-          if (doc) {
-            rowValues.push(format(new Date(doc.expiry_date), "dd/MM/yyyy"));
-          } else {
-            rowValues.push("—");
-          }
-        });
-
-        const dataRow = wsEmp.addRow(rowValues);
+        const vals: string[] = [empName, ...empDocTypes.map((dt) => {
+          const doc = docs[dt];
+          return doc ? format(new Date(doc.expiry_date), "dd/MM/yyyy") : "—";
+        })];
+        const dataRow = wsEmp.addRow(vals);
         dataRow.height = 18;
-        dataRow.getCell(1).style = employeeStyle(empIdx);
-
-        empDocTypes.forEach((docType, colIdx) => {
+        const rowBg = empIdx % 2 === 0 ? "FFFFFFFF" : "FFF4F6FA";
+        dataRow.getCell(1).style = {
+          font: { bold: true, color: { argb: "FF1A1A1A" }, name: "Arial", size: 10 },
+          fill: { type: "pattern", pattern: "solid", fgColor: { argb: rowBg } },
+          alignment: { horizontal: "left", vertical: "middle" },
+          border: { bottom: { style: "thin", color: { argb: "FFE5E7EB" } } },
+        };
+        empDocTypes.forEach((dt, colIdx) => {
           const cell = dataRow.getCell(colIdx + 2);
-          const doc = docs[docType];
+          const doc = docs[dt];
           if (doc) {
             const s = getStatus(doc.expiry_date);
-            cell.style = docCellStyle(s.key, empIdx);
+            const st = STATUS_STYLE[s.key] ?? STATUS_STYLE.ok;
+            cell.style = {
+              font: { bold: true, color: { argb: st.font }, name: "Arial", size: 10 },
+              fill: { type: "pattern", pattern: "solid", fgColor: { argb: st.bg } },
+              alignment: { horizontal: "center", vertical: "middle" },
+              border: { bottom: { style: "thin", color: { argb: "FFE5E7EB" } }, right: { style: "thin", color: { argb: "FFDDDDDD" } } },
+            };
           } else {
-            cell.style = emptyCellStyle(empIdx);
+            cell.style = {
+              fill: { type: "pattern", pattern: "solid", fgColor: { argb: rowBg } },
+              alignment: { horizontal: "center", vertical: "middle" },
+              border: { bottom: { style: "thin", color: { argb: "FFE5E7EB" } }, right: { style: "thin", color: { argb: "FFDDDDDD" } } },
+            };
           }
         });
       });
-
-      // Linha em branco separadora entre empresas
-      const blankRow = wsEmp.addRow([]);
-      blankRow.height = 8;
+      wsEmp.addRow([]).height = 8;
     });
 
-    // ════════════════════════════════════════════════════════════
-    // ABA 2 — DOCUMENTOS DA EMPRESA
-    // ════════════════════════════════════════════════════════════
+    // ABA DOCS EMPRESA
     if (compDocTypes.length > 0) {
       const wsComp = wb.addWorksheet("Documentos da Empresa");
-
-      wsComp.columns = [
-        { key: "empresa", width: 40 },
-        ...compDocTypes.map((t) => ({ key: t, width: 18 })),
-      ];
-
-      // Cabeçalho
+      wsComp.columns = [{ key: "empresa", width: 40 }, ...compDocTypes.map((t) => ({ key: t, width: 18 }))];
       const compHeader = wsComp.addRow(["EMPRESA", ...compDocTypes]);
       compHeader.height = 24;
-      compHeader.getCell(1).style = headerStyle("FF1E3A5F");
-      compDocTypes.forEach((_, i) => {
-        compHeader.getCell(i + 2).style = headerStyle("FF2C4E80");
+      compHeader.eachCell((cell, col) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" }, name: "Arial", size: 10 };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: col === 1 ? "FF1E3A5F" : "FF2C4E80" } };
+        cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+        cell.border = { bottom: { style: "medium", color: { argb: "FFAAAAAA" } } };
       });
-
-      // Linhas por empresa
       Object.entries(byCompanyDocs).sort(([a], [b]) => a.localeCompare(b)).forEach(([compName, docs], compIdx) => {
-        const rowValues: string[] = [compName];
-        compDocTypes.forEach((docType) => {
-          const doc = docs[docType];
-          rowValues.push(doc ? format(new Date(doc.expiry_date), "dd/MM/yyyy") : "—");
-        });
-
-        const dataRow = wsComp.addRow(rowValues);
+        const vals = [compName, ...compDocTypes.map((dt) => docs[dt] ? format(new Date(docs[dt].expiry_date), "dd/MM/yyyy") : "—")];
+        const dataRow = wsComp.addRow(vals);
         dataRow.height = 18;
-        dataRow.getCell(1).style = employeeStyle(compIdx);
-
-        compDocTypes.forEach((docType, colIdx) => {
+        const rowBg = compIdx % 2 === 0 ? "FFFFFFFF" : "FFF4F6FA";
+        dataRow.getCell(1).style = {
+          font: { bold: true, color: { argb: "FF1A1A1A" }, name: "Arial", size: 10 },
+          fill: { type: "pattern", pattern: "solid", fgColor: { argb: rowBg } },
+          alignment: { horizontal: "left", vertical: "middle" },
+        };
+        compDocTypes.forEach((dt, colIdx) => {
           const cell = dataRow.getCell(colIdx + 2);
-          const doc = docs[docType];
+          const doc = docs[dt];
           if (doc) {
             const s = getStatus(doc.expiry_date);
-            cell.style = docCellStyle(s.key, compIdx);
+            const st = STATUS_STYLE[s.key] ?? STATUS_STYLE.ok;
+            cell.style = {
+              font: { bold: true, color: { argb: st.font }, name: "Arial", size: 10 },
+              fill: { type: "pattern", pattern: "solid", fgColor: { argb: st.bg } },
+              alignment: { horizontal: "center", vertical: "middle" },
+            };
           } else {
-            cell.style = emptyCellStyle(compIdx);
+            cell.style = { fill: { type: "pattern", pattern: "solid", fgColor: { argb: rowBg } }, alignment: { horizontal: "center", vertical: "middle" } };
           }
         });
       });
     }
 
-    // ── Gerar e baixar ───────────────────────────────────────────
     const buffer = await wb.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    saveAs(blob, `vencimentos-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    saveAs(
+      new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+      `vencimentos-${format(new Date(), "yyyy-MM-dd")}.xlsx`
+    );
   };
 
   const exportPDF = () => window.print();
+
+  const hasData = Object.keys(byCompanyEmp).length > 0 || Object.keys(byCompanyDocs).length > 0;
 
   return (
     <div className="space-y-4">
@@ -304,88 +464,47 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Mobile: cards */}
-      <div className="divide-y divide-border overflow-hidden rounded border border-border bg-card sm:hidden">
-        {filtered.length === 0 ? (
-          <p className="px-3 py-8 text-center text-sm text-muted-foreground">Nenhum resultado.</p>
-        ) : (
-          filtered.map((r) => {
-            const s = getStatus(r.expiry_date);
-            const statusLabel =
-              s.key === "expired" ? "VENCIDO" :
-              s.key === "attention" ? "URGENTE" :
-              s.key === "warning" ? "ATENCAO" : "EM DIA";
-            return (
-              <div key={r.id} className="space-y-1 px-3 py-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[11px] font-medium", s.className)}>
-                      <span className={cn("h-1.5 w-1.5 rounded-full", s.dotClass)} />
-                      {statusLabel}
-                    </span>
-                    <span className="text-sm font-medium text-foreground">{r.name}</span>
-                  </div>
-                  <span className={cn("shrink-0 text-xs font-medium",
-                    s.key === "expired" ? "text-status-expired" :
-                    s.key === "attention" ? "text-status-attention" :
-                    s.key === "warning" ? "text-status-warning" : "text-muted-foreground"
-                  )}>
-                    {formatDaysLeft(s.daysLeft)}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                  <span>{r.employee?.companies?.name ?? r.company?.name}</span>
-                  <span>{r.employee?.full_name ?? "—"}</span>
-                  <span>{format(new Date(r.expiry_date), "dd/MM/yyyy", { locale: ptBR })}</span>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+      {/* Conteúdo */}
+      {!hasData ? (
+        <div className="rounded border border-border bg-card px-3 py-10 text-center text-sm text-muted-foreground">
+          Nenhum resultado encontrado.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Blocos por empresa - funcionários */}
+          {Object.entries(byCompanyEmp)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([compName, employees]) => (
+              <CompanyBlock
+                key={compName}
+                companyName={compName}
+                employees={employees}
+                docTypes={empDocTypes}
+              />
+            ))}
 
-      {/* Desktop: tabela */}
-      <div className="hidden overflow-hidden rounded border border-border bg-card sm:block">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-secondary/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2 font-semibold">Empresa</th>
-              <th className="px-3 py-2 font-semibold">Funcionario</th>
-              <th className="px-3 py-2 font-semibold">Documento</th>
-              <th className="px-3 py-2 font-semibold">Vencimento</th>
-              <th className="px-3 py-2 font-semibold">Dias</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">Nenhum resultado.</td>
-              </tr>
-            ) : (
-              filtered.map((r) => {
-                const s = getStatus(r.expiry_date);
-                return (
-                  <tr key={r.id} className="hover:bg-secondary/40">
-                    <td className="px-3 py-2">{r.employee?.companies?.name ?? r.company?.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{r.employee?.full_name ?? "—"}</td>
-                    <td className="px-3 py-2 font-medium">{r.name}</td>
-                    <td className="px-3 py-2 tabular-nums">{format(new Date(r.expiry_date), "dd/MM/yyyy", { locale: ptBR })}</td>
-                    <td className="px-3 py-2 tabular-nums text-muted-foreground">
-                      {s.daysLeft < 0 ? `-${Math.abs(s.daysLeft)}` : s.daysLeft}
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className={cn("inline-flex rounded-sm px-2 py-0.5 text-[11px] font-medium", s.className)}>
-                        {s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : s.key === "warning" ? "ATENCAO" : "EM DIA"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+          {/* Documentos da empresa (sem funcionário) */}
+          {Object.keys(byCompanyDocs).length > 0 && (
+            <>
+              <div className="border-t border-border pt-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Documentos da Empresa
+                </p>
+              </div>
+              {Object.entries(byCompanyDocs)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([compName, docs]) => (
+                  <CompanyDocsBlock
+                    key={compName}
+                    companyName={compName}
+                    docs={docs}
+                    docTypes={compDocTypes}
+                  />
+                ))}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
