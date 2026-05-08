@@ -13,8 +13,11 @@ import Employees from "./pages/Employees";
 import EmployeeDetail from "./pages/EmployeeDetail";
 import CompanyDocuments from "./pages/CompanyDocuments";
 import Reports from "./pages/Reports";
+import Planos from "./pages/Planos";
+import PagamentoSucesso from "./pages/PagamentoSucesso";
 import AppLayout from "./components/AppLayout";
 import RequireAuth from "./components/RequireAuth";
+import { SubscriptionGuard } from "./components/SubscriptionGuard";
 import { AuthProvider } from "./hooks/useAuth";
 
 const queryClient = new QueryClient({
@@ -35,10 +38,23 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            {/* Públicas */}
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+
+            {/* Requer auth, mas sem guard de subscription */}
+            <Route path="/planos" element={<RequireAuth><Planos /></RequireAuth>} />
+            <Route path="/pagamento/sucesso" element={<PagamentoSucesso />} />
+
+            {/* Requer auth + subscription ativa */}
+            <Route element={
+              <RequireAuth>
+                <SubscriptionGuard>
+                  <AppLayout />
+                </SubscriptionGuard>
+              </RequireAuth>
+            }>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/empresas" element={<Companies />} />
               <Route path="/funcionarios" element={<Employees />} />
@@ -46,6 +62,7 @@ const App = () => (
               <Route path="/documentos-empresa" element={<CompanyDocuments />} />
               <Route path="/relatorios" element={<Reports />} />
             </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

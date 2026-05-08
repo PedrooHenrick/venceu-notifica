@@ -1,5 +1,5 @@
 import { Link, Navigate } from "react-router-dom";
-import { ArrowRight, BellRing, ShieldCheck } from "lucide-react";
+import { ArrowRight, BellRing, ShieldCheck, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Landing() {
@@ -92,6 +92,28 @@ export default function Landing() {
           transform: translateY(-1px);
         }
 
+        .vf-btn-blue {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          background: #2563eb;
+          color: #fff;
+          border: none;
+          padding: 14px 28px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: background 0.2s, transform 0.15s;
+          text-decoration: none;
+          width: 100%;
+        }
+        .vf-btn-blue:hover {
+          background: #1d4ed8;
+          transform: translateY(-1px);
+        }
+
         .vf-btn-ghost {
           font-family: 'DM Sans', sans-serif;
           font-size: 14px;
@@ -107,6 +129,24 @@ export default function Landing() {
           align-items: center;
         }
         .vf-btn-ghost:hover { border-color: #888; color: #111; }
+
+        .vf-btn-outline-white {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          background: transparent;
+          color: #fff;
+          border: 1px solid rgba(255,255,255,0.3);
+          padding: 13px 24px;
+          cursor: pointer;
+          transition: border-color 0.2s, background 0.2s;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+        }
+        .vf-btn-outline-white:hover { border-color: #fff; background: rgba(255,255,255,0.05); }
 
         .vf-divider {
           width: 40px;
@@ -188,19 +228,69 @@ export default function Landing() {
           padding: 24px 0;
         }
 
-        .vf-free-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
+        /* ── PRICING ── */
+        .vf-pricing-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
+          max-width: 760px;
+          margin: 48px auto 0;
+        }
+
+        .vf-plan-card {
+          border: 1px solid #e0e0d8;
+          background: #fff;
+          padding: 36px 32px;
+          position: relative;
+          transition: box-shadow 0.2s;
+        }
+        .vf-plan-card:hover { box-shadow: 0 8px 40px rgba(0,0,0,0.07); }
+
+        .vf-plan-card-featured {
+          border: 2px solid #2563eb;
+          background: #1a1a1a;
+          padding: 36px 32px;
+          position: relative;
+          transition: box-shadow 0.2s;
+        }
+        .vf-plan-card-featured:hover { box-shadow: 0 8px 40px rgba(37,99,235,0.15); }
+
+        .vf-plan-badge {
+          position: absolute;
+          top: -12px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #2563eb;
+          color: #fff;
           font-family: 'DM Sans', sans-serif;
-          font-size: 12px;
-          font-weight: 600;
-          color: #166534;
-          background: #dcfce7;
-          border: 1px solid #bbf7d0;
-          padding: 4px 12px;
-          border-radius: 2px;
-          margin-bottom: 16px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          padding: 4px 14px;
+          white-space: nowrap;
+        }
+
+        .vf-check-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 12px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          color: #444;
+          line-height: 1.5;
+        }
+
+        .vf-check-item-dark {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 12px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          color: #ccc;
+          line-height: 1.5;
         }
 
         @media (max-width: 768px) {
@@ -218,6 +308,7 @@ export default function Landing() {
           .vf-hero-actions { flex-direction: column; align-items: stretch; }
           .vf-btn-primary, .vf-btn-ghost { justify-content: center; text-align: center; }
           .vf-footer { flex-direction: column; align-items: flex-start; gap: 8px; }
+          .vf-pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
         }
       `}</style>
 
@@ -236,7 +327,7 @@ export default function Landing() {
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <Link to="/auth" className="vf-nav-link">Entrar</Link>
             <Link to="/auth?mode=signup" className="vf-btn-primary" style={{ padding: "9px 18px", fontSize: 13 }}>
-              Criar conta gratis
+              Testar gratis
             </Link>
           </div>
         </div>
@@ -248,7 +339,7 @@ export default function Landing() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
               <span className="vf-tag" style={{ margin: 0 }}>Controle de documentos</span>
-              <span className="vf-tag" style={{ margin: 0, color: "#16a34a", borderColor: "#16a34a" }}>Gratuito</span>
+              <span className="vf-tag" style={{ margin: 0, color: "#16a34a", borderColor: "#16a34a" }}>7 dias grátis</span>
             </div>
             <div style={{ marginBottom: 20 }} />
 
@@ -275,7 +366,7 @@ export default function Landing() {
 
             <div className="vf-hero-actions" style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
               <Link to="/auth?mode=signup" className="vf-btn-primary">
-                Criar conta <ArrowRight size={15} />
+                Testar 7 dias grátis <ArrowRight size={15} />
               </Link>
               <Link to="/auth" className="vf-btn-ghost">
                 Já tenho conta
@@ -283,7 +374,7 @@ export default function Landing() {
             </div>
 
             <p className="vf-sans" style={{ fontSize: 12, color: "#aaa", marginTop: 16 }}>
-              Sem cartão de crédito. Acesso completo desde o primeiro dia.
+              Sem cartão de crédito no período de teste.
             </p>
           </div>
 
@@ -430,7 +521,7 @@ export default function Landing() {
               { label: "Alertas automáticos", desc: "Email antes de vencer. Você escolhe com quantos dias de antecedência." },
               { label: "Painel de vencimentos", desc: "Vencidos, urgentes e a vencer — tudo numa tela só, sem precisar filtrar." },
               { label: "Por empresa ou por funcionário", desc: "Você organiza do jeito que faz sentido pro seu processo." },
-              { label: "Rápido de verdade", desc: "Cadastre um funcionário do zero em menos de 1 minuto." },
+              { label: "Leitura de PDF com IA", desc: "Envie o PDF do documento e a IA extrai automaticamente as datas e informações." },
               { label: "Seus dados são seus", desc: "Nada é compartilhado. Hospedagem segura, backup diário." },
               { label: "Roda no celular", desc: "Sem app para instalar. Qualquer navegador, qualquer dispositivo." },
             ].map((f) => (
@@ -446,6 +537,81 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── PLANOS ── */}
+      <section style={{ padding: "80px 20px", background: "#fafaf8" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", textAlign: "center" }}>
+          <span className="vf-tag" style={{ margin: "0 auto 0", display: "inline-block" }}>Planos</span>
+          <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 900, color: "#111", marginTop: 12, marginBottom: 8 }}>
+            Simples assim.
+          </h2>
+          <p className="vf-sans" style={{ fontSize: 15, color: "#777", margin: "0 auto", maxWidth: 420, lineHeight: 1.7 }}>
+            Teste sem compromisso. Assine quando estiver pronto.
+          </p>
+
+          <div className="vf-pricing-grid">
+            {/* Plano Teste */}
+            <div className="vf-plan-card">
+              <span className="vf-sans" style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#888" }}>Teste</span>
+              <div style={{ margin: "16px 0 4px" }}>
+                <span className="vf-serif" style={{ fontSize: 42, fontWeight: 900, color: "#111", lineHeight: 1 }}>Grátis</span>
+              </div>
+              <p className="vf-sans" style={{ fontSize: 13, color: "#aaa", margin: "0 0 28px" }}>por 7 dias, sem cartão</p>
+
+              <div style={{ marginBottom: 28 }}>
+                {[
+                  "Até 2 empresas",
+                  "Até 5 funcionários por empresa",
+                  "Até 20 PDFs processados",
+                  "Alertas por email",
+                  "Painel de vencimentos",
+                ].map((item) => (
+                  <div key={item} className="vf-check-item">
+                    <Check size={15} color="#16a34a" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link to="/auth?mode=signup" className="vf-btn-primary" style={{ width: "100%", justifyContent: "center" }}>
+                Começar teste <ArrowRight size={14} />
+              </Link>
+            </div>
+
+            {/* Plano Pro */}
+            <div className="vf-plan-card-featured">
+              <div className="vf-plan-badge">Mais popular</div>
+
+              <span className="vf-sans" style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#6b8cff" }}>Pro</span>
+              <div style={{ margin: "16px 0 4px", display: "flex", alignItems: "flex-end", gap: 6 }}>
+                <span className="vf-serif" style={{ fontSize: 42, fontWeight: 900, color: "#fff", lineHeight: 1 }}>R$39</span>
+                <span className="vf-sans" style={{ fontSize: 16, color: "#888", marginBottom: 6 }}>,90/mês</span>
+              </div>
+              <p className="vf-sans" style={{ fontSize: 13, color: "#666", margin: "0 0 28px" }}>tudo liberado, sem limite</p>
+
+              <div style={{ marginBottom: 28 }}>
+                {[
+                  "Empresas ilimitadas",
+                  "Funcionários ilimitados",
+                  "PDFs ilimitados ",
+                  "Alertas por email",
+                  "Painel de vencimentos",
+                  "Suporte prioritário",
+                ].map((item) => (
+                  <div key={item} className="vf-check-item-dark">
+                    <Check size={15} color="#6b8cff" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link to="/auth?mode=signup" className="vf-btn-blue">
+                Assinar agora <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── FAQ ── */}
       <section style={{ maxWidth: 700, margin: "0 auto", padding: "80px 20px" }}>
         <span className="vf-tag">Dúvidas</span>
@@ -454,10 +620,11 @@ export default function Landing() {
         </h2>
 
         {[
-          { q: "Quanto custa?", a: "Nada. O UniDatas é gratuito." },
+          { q: "Precisa de cartão para testar?", a: "Não. Os 7 dias de teste são completamente gratuitos e sem necessidade de cartão de crédito." },
+          { q: "O que acontece depois do teste?", a: "Você pode assinar o plano Pro por R$24,90/mês para continuar usando sem limites. Caso não assine, o acesso é encerrado." },
           { q: "Como recebo os alertas?", a: "Por email, automaticamente. Você configura quantos dias antes quer ser avisado." },
           { q: "Precisa instalar alguma coisa?", a: "Não. Roda direto no navegador. Celular, tablet, computador — tanto faz." },
-          { q: "Quantos funcionários posso cadastrar?", a: "Ilimitados. Sem limite, sem cobrança por usuário adicional." },
+          { q: "Posso cancelar quando quiser?", a: "Sim. Sem multa, sem burocracia. Cancele quando quiser direto pelo painel." },
           { q: "Meus dados ficam seguros?", a: "Sim. Hospedagem segura, backup diário. Seus dados não são compartilhados com ninguém." },
         ].map((item) => (
           <div key={item.q} className="vf-faq-item">
@@ -466,30 +633,11 @@ export default function Landing() {
           </div>
         ))}
       </section>
-
-      {/* ── CTA FINAL ── */}
-      <section style={{ background: "#111", padding: "80px 20px", textAlign: "center" }}>
-        <div style={{ maxWidth: 520, margin: "0 auto" }}>
-          <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", color: "#fff", fontWeight: 900, marginTop: 0, marginBottom: 16 }}>
-            Comece agora.<br />É gratuito.
-          </h2>
-          <p className="vf-sans" style={{ fontSize: 15, color: "#888", marginBottom: 36, lineHeight: 1.7 }}>
-            Sem burocracia, sem cartão. Crie sua conta e comece a cadastrar em menos de 2 minutos.
-          </p>
-          <Link to="/auth?mode=signup" className="vf-btn-primary" style={{ background: "#fff", color: "#111", fontSize: 15, padding: "16px 36px" }}>
-            Criar conta gratis <ArrowRight size={15} />
-          </Link>
-        </div>
-      </section>
-
-      <footer className="vf-footer" style={{ borderTop: "1px solid #222", background: "#0a0a0a", padding: "28px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+      <footer className="vf-footer" style={{ borderTop: "1px solid #ffffff", background: "#ffffff", padding: "28px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <img src="/images/android-chrome-192x192.png" alt="UniDatas" style={{ height: 22, width: 22, borderRadius: 4, opacity: 0.7 }} />
           <span className="vf-sans" style={{ fontSize: 13, color: "#555" }}>UniDatas</span>
         </div>
-        <p className="vf-sans" style={{ fontSize: 12, color: "#444", margin: 0 }}>
-          © 2025 UniDatas. Feito para quem não tem tempo a perder.
-        </p>
       </footer>
     </div>
   );

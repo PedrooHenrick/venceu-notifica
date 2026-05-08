@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AlertTriangle, Calendar, CheckCircle2, Clock, ChevronRight, MessageSquare, XCircle, Trash2, X, ChevronUp } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronRight,
+  Folder,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { getStatus, formatDaysLeft } from "@/lib/status";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DocRow {
   id: string;
@@ -18,226 +22,82 @@ interface DocRow {
   company: { name: string } | null;
 }
 
-// ─── Helper para chamar Edge Functions autenticadas ───────────
-async function callFunction(name: string, body?: object) {
-  const { data: { session } } = await supabase.auth.getSession();
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session?.access_token}`,
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    }
+function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (total === 0) return <div className="h-32 w-32 rounded-full bg-gray-100" />;
+
+  let offset = 0;
+  const r = 40, cx = 50, cy = 50, circ = 2 * Math.PI * r;
+  const slices = data.map((d) => {
+    const pct = d.value / total;
+    const dash = pct * circ;
+    const gap = circ - dash;
+    const slice = { ...d, dash, gap, offset };
+    offset += dash;
+    return slice;
+  });
+
+  return (
+    <svg viewBox="0 0 100 100" className="h-24 w-24 shrink-0 -rotate-90">
+      {slices.map((s, i) => (
+        <circle key={i} cx={cx} cy={cy} r={r}
+          fill="none" stroke={s.color} strokeWidth="18"
+          strokeDasharray={`${s.dash} ${s.gap}`}
+          strokeDashoffset={-s.offset} />
+      ))}
+      <circle cx={cx} cy={cy} r="31" fill="white" />
+    </svg>
   );
-  return res;
 }
 
-// ─── Modal base ───────────────────────────────────────────────
-function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-  if (!open) return null;
+function UpcomingCard({ d, s }: { d: DocRow; s: ReturnType<typeof getStatus> }) {
+  const link = d.employee_id ? `/funcionarios/${d.employee_id}` : `/documentos-empresa`;
+  const dotColor =
+    s.key === "expired" ? "bg-red-500" :
+    s.key === "attention" ? "bg-red-400" : "bg-yellow-400";
+  const badgeClass =
+    s.key === "expired"
+      ? "bg-red-50 text-red-600"
+      : s.key === "attention"
+      ? "bg-orange-50 text-orange-500"
+      : "bg-yellow-50 text-yellow-600";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
-        {children}
+    <div className="flex items-start gap-3 px-4 py-3 border-b border-gray-50 last:border-0">
+      <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", dotColor)} />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-gray-800 text-sm truncate">{d.name}</p>
+        <p className="text-xs text-gray-400 truncate mt-0.5">
+          {d.employee
+            ? `${d.employee.full_name} — ${d.employee.companies?.name ?? ""}`
+            : d.company?.name ?? "—"}
+        </p>
+        <div className="mt-1.5 flex items-center gap-2">
+          <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-semibold", badgeClass)}>
+            {format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}
+          </span>
+        </div>
       </div>
+      <Link
+        to={link}
+        className="shrink-0 flex items-center gap-0.5 text-xs font-medium text-blue-600 hover:underline mt-0.5"
+      >
+        Ver <ChevronRight className="h-3.5 w-3.5" />
+      </Link>
     </div>
   );
 }
 
-// ─── Modal Feedback ───────────────────────────────────────────
-function FeedbackModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSend = async () => {
-    if (!text.trim()) return;
-    setLoading(true);
-    try {
-      const res = await callFunction("send-feedback", { message: text.trim() });
-      if (res.ok) {
-        setText("");
-        onClose();
-        toast.success("Feedback enviado! Obrigado 🙏");
-      } else {
-        toast.error("Erro ao enviar feedback. Tente novamente.");
-      }
-    } catch {
-      toast.error("Erro ao enviar feedback. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal open={open} onClose={onClose}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">Enviar feedback</h2>
-        </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      <p className="text-sm text-muted-foreground mb-3">
-        Tem alguma sugestão, elogio ou problema? Nos conta!
-      </p>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Escreva aqui o seu feedback..."
-        rows={4}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
-      />
-      <div className="flex justify-end gap-2 mt-4">
-        <button
-          onClick={onClose}
-          className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors"
-        >
-          Cancelar
-        </button>
-        <button
-          onClick={handleSend}
-          disabled={!text.trim() || loading}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
-          {loading ? "Enviando..." : "Enviar"}
-        </button>
-      </div>
-    </Modal>
-  );
-}
-
-// ─── Modal Excluir Conta ──────────────────────────────────────
-function DeleteAccountModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [confirm, setConfirm] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const handleDelete = async () => {
-    if (confirm !== "EXCLUIR") return;
-    setLoading(true);
-    try {
-      const res = await callFunction("delete-account");
-      if (res.ok) {
-        await supabase.auth.signOut();
-        navigate("/");
-        toast.success("Conta excluída com sucesso.");
-      } else {
-        const data = await res.json();
-        toast.error(data?.error ?? "Erro ao excluir conta. Tente novamente.");
-        setLoading(false);
-      }
-    } catch {
-      toast.error("Erro ao excluir conta. Tente novamente.");
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal open={open} onClose={onClose}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Trash2 className="h-5 w-5 text-red-500" />
-          <h2 className="text-base font-semibold text-red-600">Excluir conta</h2>
-        </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2.5 mb-4">
-        <p className="text-sm font-medium text-red-700">⚠️ Esta ação é irreversível.</p>
-        <p className="text-xs text-red-600 mt-0.5">Todos os seus dados, empresas e funcionários serão permanentemente apagados.</p>
-      </div>
-      <p className="text-sm text-muted-foreground mb-2">
-        Para confirmar, digite <span className="font-semibold text-foreground">EXCLUIR</span> abaixo:
-      </p>
-      <input
-        value={confirm}
-        onChange={(e) => setConfirm(e.target.value)}
-        placeholder="EXCLUIR"
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
-      />
-      <div className="flex justify-end gap-2 mt-4">
-        <button
-          onClick={onClose}
-          className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-secondary transition-colors"
-        >
-          Cancelar
-        </button>
-        <button
-          onClick={handleDelete}
-          disabled={confirm !== "EXCLUIR" || loading}
-          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-40 transition-colors"
-        >
-          {loading ? "Excluindo..." : "Excluir minha conta"}
-        </button>
-      </div>
-    </Modal>
-  );
-}
-
-// ─── Botão Flutuante ──────────────────────────────────────────
-function FloatingMenu({
-  onFeedback,
-  onDeleteAccount,
-}: {
-  onFeedback: () => void;
-  onDeleteAccount: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-      <div
-        className={cn(
-          "flex flex-col gap-1.5 transition-all duration-200",
-          open
-            ? "opacity-100 translate-y-0 pointer-events-auto"
-            : "opacity-0 translate-y-3 pointer-events-none"
-        )}
-      >
-        <button
-          onClick={() => { onFeedback(); setOpen(false); }}
-          className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-lg hover:bg-secondary transition-colors whitespace-nowrap"
-        >
-          <MessageSquare className="h-4 w-4 text-primary" />
-          Enviar feedback
-        </button>
-        <button
-          onClick={() => { onDeleteAccount(); setOpen(false); }}
-          className="flex items-center gap-2.5 rounded-lg border border-red-200 bg-card px-4 py-2.5 text-sm font-medium text-red-600 shadow-lg hover:bg-red-50 transition-colors whitespace-nowrap"
-        >
-          <Trash2 className="h-4 w-4" />
-          Excluir conta
-        </button>
-      </div>
-
-      <button
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all duration-200 active:scale-95",
-          open
-            ? "bg-foreground text-background"
-            : "bg-primary text-primary-foreground hover:scale-105"
-        )}
-        title="Configurações da conta"
-      >
-        {open ? <X className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-      </button>
-    </div>
-  );
-}
-
-// ─── Dashboard principal ──────────────────────────────────────
 export default function Dashboard() {
+  const { user } = useAuth();
   const [docs, setDocs] = useState<DocRow[]>([]);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+
+  const displayName = user?.user_metadata?.full_name
+    ?? user?.email?.split("@")[0]
+    ?? "Usuário";
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
 
   useEffect(() => {
     (async () => {
@@ -261,182 +121,184 @@ export default function Dashboard() {
   const upcoming = docs
     .map((d) => ({ d, s: getStatus(d.expiry_date) }))
     .filter(({ s }) => s.key !== "ok")
+    .slice(0, 5);
+
+  const byType: Record<string, number> = {};
+  docs.forEach((d) => { const k = d.doc_type ?? "Outros"; byType[k] = (byType[k] ?? 0) + 1; });
+  const donutColors = ["#3b82f6", "#22c55e", "#f59e0b", "#94a3b8", "#ef4444"];
+  const donutData = Object.entries(byType)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([label, value], i) => ({ label, value, color: donutColors[i] }));
+
+  const recentDocs = [...docs]
+    .sort((a, b) => b.id.localeCompare(a.id))
     .slice(0, 3);
 
-  const cards = [
-    { label: "Vencidos", value: counts.expired, icon: AlertTriangle, accent: "expired" },
-    { label: "Vencem em 7 dias", value: counts.in7, icon: Clock, accent: "attention" },
-    { label: "Vencem em 30 dias", value: counts.in30, icon: Calendar, accent: "warning" },
-    { label: "Em dia", value: counts.ok, icon: CheckCircle2, accent: "ok" },
-  ] as const;
-
-  const accentMap = {
-    expired: "border-l-status-expired text-status-expired",
-    attention: "border-l-status-attention text-status-attention",
-    warning: "border-l-status-warning text-status-warning",
-    ok: "border-l-status-ok text-status-ok",
-  } as const;
-
   return (
-    <>
-      <div className="space-y-4">
-        <div className="border-b border-border pb-3">
-          <h1 className="text-xl font-semibold tracking-tight">Painel</h1>
-          <p className="text-xs text-muted-foreground">Visao geral dos vencimentos.</p>
-        </div>
+    <div className="space-y-5">
+      {/* ── Saudação ── */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {greeting}, {displayName} 👋
+        </h1>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Aqui está um resumo do que está acontecendo na sua empresa.
+        </p>
+      </div>
 
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-          {cards.map((c) => (
-            <div
-              key={c.label}
-              className={cn(
-                "flex items-center gap-3 rounded border border-border border-l-4 bg-card px-3 py-3 sm:px-4",
-                accentMap[c.accent]
-              )}
-            >
-              <c.icon className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
-              <div className="min-w-0">
-                <div className="text-[10px] font-medium uppercase leading-tight tracking-wide text-muted-foreground sm:text-[11px]">
-                  {c.label}
-                </div>
-                <div className="text-xl font-bold tabular-nums text-foreground sm:text-2xl">
-                  {c.value}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {counts.expired + counts.in7 > 0 && (
-          <div className="flex items-start gap-2.5 rounded border border-status-attention/30 bg-status-attention-soft px-3 py-2.5 text-sm">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-attention" />
-            <div>
-              <span className="font-semibold text-status-attention">
-                {counts.expired + counts.in7}{" "}
-                {counts.expired + counts.in7 === 1 ? "documento precisa" : "documentos precisam"} de
-                atencao esta semana.
-              </span>
-              <span className="ml-1 text-foreground/70">Resolva agora para evitar multas.</span>
-            </div>
+      {/* ── Banner ── */}
+      <div className="relative overflow-hidden rounded-2xl bg-blue-600 px-5 py-4 text-white">
+        <div className="max-w-xs">
+          <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+            <Folder className="h-5 w-5 text-white" />
           </div>
-        )}
-
-        <div className="overflow-hidden rounded border border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border bg-secondary/60 px-3 py-2">
-            <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Proximos vencimentos
-            </h2>
-            <Link to="/relatorios" className="text-[11px] font-medium text-primary hover:underline">
-              Ver relatorio completo
-            </Link>
+          <h2 className="text-base font-bold">Mantenha tudo em dia</h2>
+          <p className="mt-1 text-sm text-blue-100">
+            Organize os documentos e evite problemas futuros.
+          </p>
+          <Link
+            to="/documentos-empresa"
+            className="mt-3 inline-flex items-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+          >
+            Ver meus documentos
+          </Link>
+        </div>
+        <div className="absolute right-4 top-1/2 hidden -translate-y-1/2 md:block">
+          <div className="flex items-end gap-2 opacity-30">
+            <div className="h-16 w-8 rounded-t-lg bg-white" />
+            <div className="h-24 w-8 rounded-t-lg bg-white" />
+            <div className="h-12 w-8 rounded-t-lg bg-white" />
+            <div className="h-20 w-8 rounded-t-lg bg-white" />
           </div>
+        </div>
+      </div>
 
-          {upcoming.length === 0 ? (
-            <div className="p-8 text-center">
-              <CheckCircle2 className="mx-auto h-8 w-8 text-status-ok" />
-              <p className="mt-2 text-sm font-medium">Tudo em dia</p>
-              <p className="text-xs text-muted-foreground">
-                Nenhum documento vencendo nos proximos 30 dias.
-              </p>
-            </div>
+      {/* ── Atividades + Donut ── */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Atividades recentes */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold text-gray-900">Atividades recentes</h2>
+          {recentDocs.length === 0 ? (
+            <p className="text-xs text-gray-400">Nenhuma atividade ainda.</p>
           ) : (
-            <>
-              {/* Mobile */}
-              <div className="divide-y divide-border sm:hidden">
-                {upcoming.map(({ d, s }) => {
-                  const link = d.employee_id ? `/funcionarios/${d.employee_id}` : `/documentos-empresa`;
-                  const statusLabel = s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : "ATENCAO";
-                  return (
-                    <Link key={d.id} to={link} className="flex items-start justify-between gap-3 px-3 py-3 hover:bg-secondary/40">
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[11px] font-medium", s.className)}>
-                            <span className={cn("h-1.5 w-1.5 rounded-full", s.dotClass)} />
-                            {statusLabel}
-                          </span>
-                          <span className="truncate text-sm font-medium text-foreground">
-                            {d.name}
-                            {d.doc_type && <span className="ml-1 text-[11px] font-normal text-muted-foreground">({d.doc_type})</span>}
-                          </span>
-                        </div>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {d.employee ? `${d.employee.full_name} — ${d.employee.companies?.name ?? ""}` : d.company?.name ?? ""}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Vence em <span className="font-medium text-foreground">{format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}</span>
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <span className={cn("whitespace-nowrap text-xs font-medium", s.key === "expired" ? "text-status-expired" : s.key === "attention" ? "text-status-attention" : "text-status-warning")}>
-                          {formatDaysLeft(s.daysLeft)}
-                        </span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
+            <div className="space-y-3">
+              {recentDocs.map((d, i) => (
+                <div key={d.id} className="flex items-start gap-2.5">
+                  <span className={cn(
+                    "mt-0.5 h-2 w-2 shrink-0 rounded-full",
+                    i === 0 ? "bg-blue-500" : i === 1 ? "bg-blue-400" : "bg-gray-300"
+                  )} />
+                  <div className="min-w-0">
+                    <p className="text-[13px] text-gray-700">
+                      <span className="font-medium">{d.name}</span>
+                      {d.employee && <> foi vinculado a <span className="font-medium">{d.employee.full_name}</span></>}
+                      {d.company && <> pertence a <span className="font-medium">{d.company.name}</span></>}
+                    </p>
+                    <p className="text-[11px] text-gray-400">
+                      Vence em {format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-              {/* Desktop */}
-              <table className="hidden w-full text-sm sm:table">
-                <thead className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-3 py-2 font-semibold">Status</th>
-                    <th className="px-3 py-2 font-semibold">Documento</th>
-                    <th className="px-3 py-2 font-semibold">Vinculo</th>
-                    <th className="px-3 py-2 font-semibold">Vencimento</th>
-                    <th className="px-3 py-2 font-semibold">Restante</th>
-                    <th className="px-3 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {upcoming.map(({ d, s }) => {
-                    const link = d.employee_id ? `/funcionarios/${d.employee_id}` : `/documentos-empresa`;
-                    return (
-                      <tr key={d.id} className="hover:bg-secondary/40">
-                        <td className="px-3 py-2">
-                          <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[11px] font-medium", s.className)}>
-                            <span className={cn("h-1.5 w-1.5 rounded-full", s.dotClass)} />
-                            {s.key === "expired" ? "VENCIDO" : s.key === "attention" ? "URGENTE" : "ATENCAO"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 font-medium">
-                          {d.name}
-                          {d.doc_type && <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">({d.doc_type})</span>}
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {d.employee ? `${d.employee.full_name} — ${d.employee.companies?.name ?? ""}` : d.company?.name ?? ""}
-                        </td>
-                        <td className="px-3 py-2 tabular-nums">
-                          {format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}
-                        </td>
-                        <td className={cn("px-3 py-2 text-xs font-medium", s.key === "expired" ? "text-status-expired" : s.key === "attention" ? "text-status-attention" : "text-status-warning")}>
-                          {formatDaysLeft(s.daysLeft)}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <Link to={link} className="inline-flex items-center text-muted-foreground hover:text-primary">
-                            <ChevronRight className="h-4 w-4" />
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </>
+        {/* Documentos por tipo */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold text-gray-900">Documentos por tipo</h2>
+          {donutData.length === 0 ? (
+            <p className="text-xs text-gray-400">Nenhum documento cadastrado.</p>
+          ) : (
+            <div className="flex items-center gap-4">
+              <DonutChart data={donutData} />
+              <div className="space-y-1.5 min-w-0 flex-1">
+                {donutData.map((d) => (
+                  <div key={d.label} className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: d.color }} />
+                    <span className="text-[12px] text-gray-600 flex-1 truncate">{d.label}</span>
+                    <span className="text-[12px] font-semibold text-gray-800 tabular-nums">{d.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* ── Botão flutuante ── */}
-      <FloatingMenu
-        onFeedback={() => setFeedbackOpen(true)}
-        onDeleteAccount={() => setDeleteAccountOpen(true)}
-      />
+      {/* ── Próximos vencimentos ── */}
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+          <h2 className="text-sm font-semibold text-gray-900">Próximos vencimentos</h2>
+          <Link to="/relatorios" className="text-xs font-medium text-blue-600 hover:underline">
+            Ver relatório completo
+          </Link>
+        </div>
 
-      {/* ── Modais ── */}
-      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
-      <DeleteAccountModal open={deleteAccountOpen} onClose={() => setDeleteAccountOpen(false)} />
-    </>
+        {upcoming.length === 0 ? (
+          <div className="p-8 text-center">
+            <CheckCircle2 className="mx-auto h-8 w-8 text-green-500" />
+            <p className="mt-2 text-sm font-medium text-gray-700">Tudo em dia</p>
+            <p className="text-xs text-gray-400">Nenhum documento vencendo nos próximos 30 dias.</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile: cards empilhados */}
+            <div className="sm:hidden divide-y divide-gray-50">
+              {upcoming.map(({ d, s }) => (
+                <UpcomingCard key={d.id} d={d} s={s} />
+              ))}
+            </div>
+
+            {/* Desktop: tabela */}
+            <table className="hidden sm:table w-full text-sm">
+              <thead className="border-b border-gray-100 text-left text-[11px] uppercase tracking-wide text-gray-400">
+                <tr>
+                  <th className="px-4 py-2.5 font-semibold">Documento</th>
+                  <th className="px-4 py-2.5 font-semibold">Vínculo</th>
+                  <th className="px-4 py-2.5 font-semibold">Vencimento</th>
+                  <th className="px-4 py-2.5 font-semibold">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {upcoming.map(({ d, s }) => {
+                  const link = d.employee_id ? `/funcionarios/${d.employee_id}` : `/documentos-empresa`;
+                  const dotColor =
+                    s.key === "expired" ? "bg-red-500" :
+                    s.key === "attention" ? "bg-red-400" : "bg-yellow-400";
+                  return (
+                    <tr key={d.id} className="hover:bg-gray-50/60">
+                      <td className="px-4 py-3 font-medium text-gray-800">
+                        <div className="flex items-center gap-2">
+                          <span className={cn("h-2 w-2 shrink-0 rounded-full", dotColor)} />
+                          {d.name}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {d.employee
+                          ? `${d.employee.full_name} — ${d.employee.companies?.name ?? ""}`
+                          : d.company?.name ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums text-gray-700">
+                        {format(new Date(d.expiry_date), "dd/MM/yyyy", { locale: ptBR })}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          to={link}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
+                        >
+                          Ver detalhes <ChevronRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

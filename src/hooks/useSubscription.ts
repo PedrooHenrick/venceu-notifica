@@ -3,9 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Subscription {
-  status: string;
-  trial_ends_at: string;
-  current_period_end: string | null;
+  plan: "trial" | "pro";
+  trial_expires_at: string | null;
+  pro_expires_at: string | null;
 }
 
 export function useSubscription() {
@@ -16,7 +16,7 @@ export function useSubscription() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("subscriptions")
-        .select("status, trial_ends_at, current_period_end")
+        .select("plan, trial_expires_at, pro_expires_at")
         .eq("user_id", user!.id)
         .maybeSingle();
 
@@ -24,41 +24,49 @@ export function useSubscription() {
       return data ?? null;
     },
     enabled: !!user,
-    refetchInterval: 5000, // 👈 verifica a cada 5 segundos automaticamente
+    refetchInterval: 5000,
   });
-
-  const now = new Date();
 
   if (isLoading) {
     return { isLoading: true, isBlocked: false, isTrial: false, daysLeft: 0 };
   }
 
+  // Usuário ainda não tem linha na tabela → trata como trial novo
   if (!subscription) {
     return { isLoading: false, isBlocked: false, isTrial: true, daysLeft: 7 };
   }
 
-  const { status, trial_ends_at, current_period_end } = subscription;
+  const now = new Date();
+  const { plan, trial_expires_at, pro_expires_at } = subscription;
 
-  // ✅ Assinatura ativa — libera mesmo se current_period_end for null
-  if (status === "active") {
-    if (!current_period_end) {
+  // ── PRO ──────────────────────────────────────────────────
+  if (plan === "pro") {
+    if (!pro_expires_at) {
       return { isLoading: false, isBlocked: false, isTrial: false, daysLeft: 0 };
     }
-    const periodEnd = new Date(current_period_end);
-    if (now < periodEnd) {
+    if (now < new Date(pro_expires_at)) {
       return { isLoading: false, isBlocked: false, isTrial: false, daysLeft: 0 };
     }
+    // PRO expirado → bloqueia
+    return { isLoading: false, isBlocked: true, isTrial: false, daysLeft: 0 };
   }
 
-  // Trial ainda válido
-  if (status === "trialing") {
-    const trialEnd = new Date(trial_ends_at);
+  // ── TRIAL ─────────────────────────────────────────────────
+  if (plan === "trial") {
+    if (!trial_expires_at) {
+      return { isLoading: false, isBlocked: true, isTrial: false, daysLeft: 0 };
+    }
+    const trialEnd = new Date(trial_expires_at);
     if (now < trialEnd) {
-      const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const daysLeft = Math.ceil(
+        (trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
       return { isLoading: false, isBlocked: false, isTrial: true, daysLeft };
     }
+    // Trial expirado → bloqueia
+    return { isLoading: false, isBlocked: true, isTrial: false, daysLeft: 0 };
   }
 
-  // Qualquer outro caso = bloqueado
+  // Qualquer plano desconhecido → bloqueia por segurança
   return { isLoading: false, isBlocked: true, isTrial: false, daysLeft: 0 };
 }
