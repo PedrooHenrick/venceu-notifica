@@ -21,7 +21,7 @@ export default function Landing() {
         * { box-sizing: border-box; }
 
         .vf-serif { font-family: 'Playfair Display', Georgia, serif; }
-        .vf-sans { font-family: 'DM Sans', sans-serif; }
+        .vf-sans  { font-family: 'DM Sans', sans-serif; }
 
         .vf-hero-word {
           display: inline-block;
@@ -127,6 +127,7 @@ export default function Landing() {
           text-decoration: none;
           display: inline-flex;
           align-items: center;
+          justify-content: center;
         }
         .vf-btn-ghost:hover { border-color: #888; color: #111; }
 
@@ -135,6 +136,14 @@ export default function Landing() {
           height: 2px;
           background: #1a1a1a;
           margin: 20px 0;
+        }
+
+        /* ── HERO ── */
+        .vf-hero-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 80px;
+          align-items: center;
         }
 
         .vf-float-card {
@@ -149,13 +158,7 @@ export default function Landing() {
           min-width: 210px;
         }
 
-        .vf-hero-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 80px;
-          align-items: center;
-        }
-
+        /* ── STORIES ── */
         .vf-story-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
@@ -170,6 +173,7 @@ export default function Landing() {
         }
         .vf-story-card:last-child { border-right: none; }
 
+        /* ── HOW TO ── */
         .vf-howto-grid {
           display: grid;
           grid-template-columns: 240px 1fr;
@@ -182,25 +186,20 @@ export default function Landing() {
           top: 80px;
         }
 
-        .vf-features-grid {
+        /* ── WHAT CHANGES ── */
+        .vf-whatchanges-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 0;
-        }
-
-        .vf-feature-card {
-          border-top: 1px solid #ddd;
-          padding: 28px 24px 28px 0;
-          display: grid;
-          grid-template-columns: 48px 1fr;
-          gap: 16px;
+          gap: 80px;
           align-items: start;
         }
-        .vf-feature-card:nth-child(even) {
-          padding: 28px 0 28px 24px;
-          border-left: 1px solid #ddd;
+
+        .vf-whatchanges-sticky {
+          position: sticky;
+          top: 80px;
         }
 
+        /* ── STEP CARD ── */
         .vf-step-card {
           padding: 40px 32px 36px;
           background: #fff;
@@ -211,11 +210,7 @@ export default function Landing() {
         }
         .vf-step-card:hover { box-shadow: 0 8px 40px rgba(0,0,0,0.07); }
 
-        .vf-faq-item {
-          border-bottom: 1px solid #e0e0d8;
-          padding: 24px 0;
-        }
-
+        /* ── PRICING ── */
         .vf-pricing-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -280,16 +275,6 @@ export default function Landing() {
           line-height: 1.5;
         }
 
-        .vf-quote-mark {
-          font-family: 'Playfair Display', serif;
-          font-size: 72px;
-          line-height: 0.6;
-          color: #2563eb;
-          opacity: 0.3;
-          display: block;
-          margin-bottom: 12px;
-        }
-
         .vf-outcome-badge {
           display: inline-block;
           font-family: 'DM Sans', sans-serif;
@@ -301,23 +286,68 @@ export default function Landing() {
           margin-bottom: 16px;
         }
 
+        /* ══════════════════════════════
+           MOBILE OVERRIDES
+        ══════════════════════════════ */
         @media (max-width: 768px) {
-          .vf-hero-grid { grid-template-columns: 1fr; gap: 40px; }
-          .vf-float-card { display: none; }
+
+          /* HERO */
+          .vf-hero-grid {
+            grid-template-columns: 1fr;
+            gap: 0;
+          }
+          .vf-hero-img-wrapper { order: -1; margin-bottom: 32px; }
+          .vf-hero-img { height: 220px !important; width: 100% !important; }
           .vf-hero-bg-deco { display: none; }
-          .vf-hero-img { height: 260px !important; }
-          .vf-story-grid { grid-template-columns: 1fr; }
-          .vf-story-card { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
-          .vf-story-card:last-child { border-bottom: none; }
-          .vf-howto-grid { grid-template-columns: 1fr; gap: 32px; }
+          .vf-float-card { display: none; }
+          .vf-hero-actions {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .vf-btn-primary, .vf-btn-ghost {
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+          }
+
+          /* STORIES */
+          .vf-story-grid {
+            grid-template-columns: 1fr;
+            margin-top: 32px;
+          }
+          .vf-story-card {
+            border-right: none;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 28px 0;
+          }
+          .vf-story-card:first-child { padding-top: 0; }
+          .vf-story-card:last-child { border-bottom: none; padding-bottom: 0; }
+
+          /* HOW TO */
+          .vf-howto-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+          }
           .vf-howto-sticky { position: static; }
-          .vf-features-grid { grid-template-columns: 1fr; }
-          .vf-feature-card:nth-child(even) { padding: 28px 0; border-left: none; }
           .vf-step-card { padding: 32px 24px 28px; }
-          .vf-hero-actions { flex-direction: column; align-items: stretch; }
-          .vf-btn-primary, .vf-btn-ghost { justify-content: center; text-align: center; }
-          .vf-footer { flex-direction: column; align-items: flex-start; gap: 8px; }
-          .vf-pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+          .vf-step-num { font-size: 60px; }
+
+          /* WHAT CHANGES */
+          .vf-whatchanges-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+          }
+          .vf-whatchanges-sticky { position: static; }
+
+          /* PRICING */
+          .vf-pricing-grid {
+            grid-template-columns: 1fr;
+            max-width: 100%;
+          }
+          .vf-plan-card, .vf-plan-card-featured {
+            padding: 32px 24px;
+          }
+          .vf-plan-card-featured { margin-top: 20px; }
         }
       `}</style>
 
@@ -333,26 +363,23 @@ export default function Landing() {
             <img src="/images/android-chrome-192x192.png" alt="UniDatas" style={{ height: 28, width: 28, borderRadius: 6 }} />
             <span className="vf-serif" style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#111" }}>UniDatas</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Link to="/auth" className="vf-nav-link">Entrar</Link>
             <Link to="/auth?mode=signup" className="vf-btn-primary" style={{ padding: "9px 18px", fontSize: 13 }}>
-              Testar gratis
+              Testar grátis
             </Link>
           </div>
         </div>
       </header>
 
       {/* ── HERO ── */}
-      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "64px 20px 56px" }}>
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "48px 20px 56px" }}>
         <div className="vf-hero-grid">
+
+          {/* Texto */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-
-            </div>
-            <div style={{ marginBottom: 20 }} />
-
             <h1 className="vf-serif" style={{
-              fontSize: "clamp(2.2rem, 5vw, 3.5rem)",
+              fontSize: "clamp(2rem, 5vw, 3.5rem)",
               fontWeight: 900,
               lineHeight: 1.1,
               letterSpacing: "-0.02em",
@@ -368,8 +395,7 @@ export default function Landing() {
             <div className="vf-divider" />
 
             <p className="vf-sans" style={{ fontSize: 16, color: "#555", lineHeight: 1.75, marginTop: 0, maxWidth: 440 }}>
-            
-            UniDatas cuida das datas — ASO, NRs, habilitações — e te avisa antes de qualquer documento vencer.
+              UniDatas cuida das datas — ASO, NRs, habilitações — e te avisa antes de qualquer documento vencer.
               Você foca no que realmente importa.
             </p>
 
@@ -381,11 +407,10 @@ export default function Landing() {
                 Já tenho conta
               </Link>
             </div>
-
           </div>
 
           {/* Imagem */}
-          <div style={{ position: "relative" }}>
+          <div className="vf-hero-img-wrapper" style={{ position: "relative" }}>
             <div className="vf-hero-bg-deco" style={{
               position: "absolute",
               top: -16, right: -16, bottom: -16, left: 16,
@@ -420,6 +445,7 @@ export default function Landing() {
               </div>
             </div>
           </div>
+
         </div>
       </section>
 
@@ -431,10 +457,10 @@ export default function Landing() {
       </div>
 
       {/* ── HISTÓRIAS REAIS ── */}
-      <section style={{ background: "#111", padding: "80px 0" }}>
+      <section style={{ background: "#111", padding: "64px 0" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
           <span className="vf-tag" style={{ color: "#6b8cff", borderColor: "#6b8cff" }}>O custo real da desatenção</span>
-          <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 3vw, 2.6rem)", color: "#fff", fontWeight: 900, marginTop: 0, maxWidth: 560 }}>
+          <h2 className="vf-serif" style={{ fontSize: "clamp(1.6rem, 3vw, 2.6rem)", color: "#fff", fontWeight: 900, marginTop: 0, maxWidth: 560 }}>
             Isso acontece toda semana<br />em alguma empresa do Brasil.
           </h2>
 
@@ -483,11 +509,11 @@ export default function Landing() {
       </section>
 
       {/* ── COMO FUNCIONA ── */}
-      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "80px 20px" }}>
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "64px 20px" }}>
         <div className="vf-howto-grid">
           <div className="vf-howto-sticky">
             <span className="vf-tag">Como funciona</span>
-            <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 2.5vw, 2.4rem)", fontWeight: 900, lineHeight: 1.2, color: "#111", margin: 0 }}>
+            <h2 className="vf-serif" style={{ fontSize: "clamp(1.6rem, 2.5vw, 2.4rem)", fontWeight: 900, lineHeight: 1.2, color: "#111", margin: 0 }}>
               Configure uma vez.<br />Esqueça para sempre.
             </h2>
             <div className="vf-divider" />
@@ -527,13 +553,14 @@ export default function Landing() {
       </section>
 
       {/* ── O QUE MUDA NA SUA VIDA ── */}
-      <section style={{ background: "#f4f4f0", padding: "80px 0" }}>
+      <section style={{ background: "#f4f4f0", padding: "64px 0" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "80px", alignItems: "start" }}>
-            {/* Lado esquerdo — título fixo */}
-            <div style={{ position: "sticky", top: 80 }}>
+          <div className="vf-whatchanges-grid">
+
+            {/* Lado esquerdo */}
+            <div className="vf-whatchanges-sticky">
               <span className="vf-tag">O que muda na prática</span>
-              <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 900, color: "#111", marginTop: 0, marginBottom: 20, maxWidth: 400, lineHeight: 1.2 }}>
+              <h2 className="vf-serif" style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 900, color: "#111", marginTop: 0, marginBottom: 20, maxWidth: 400, lineHeight: 1.2 }}>
                 Mais do que evitar multas — você recupera tranquilidade.
               </h2>
               <div className="vf-divider" />
@@ -542,40 +569,34 @@ export default function Landing() {
               </p>
             </div>
 
-            {/* Lado direito — lista de features */}
+            {/* Lado direito */}
             <div>
               {[
                 {
-                  num: "—",
                   label: "Alertas antes de vencer",
                   desc: "Você escolhe quantos dias antes quer ser avisado. O sistema não esquece, não falta, não vai de férias.",
                 },
                 {
-                  num: "—",
                   label: "Painel de vencimentos",
                   desc: "Vencidos, urgentes, a vencer — tudo numa tela. Você abre e já sabe exatamente o que precisa de atenção.",
                 },
                 {
-                  num: "—",
                   label: "Leitura de documentos",
                   desc: "Envie o documento e as datas são extraídas automaticamente. Menos digitação, menos erro humano.",
                 },
                 {
-                  num: "—",
                   label: "Funciona para qualquer porte",
                   desc: "Cinco funcionários ou duzentos. A lógica é a mesma, a escala é sua.",
                 },
                 {
-                  num: "—",
                   label: "Sem instalação",
                   desc: "Qualquer navegador, qualquer dispositivo. Nenhuma aprovação necessária.",
                 },
                 {
-                  num: "—",
                   label: "Seus dados são seus",
                   desc: "Nada é compartilhado com terceiros. Backup diário. Você controla quem acessa.",
                 },
-              ].map((f, i) => (
+              ].map((f) => (
                 <div key={f.label} style={{
                   display: "grid",
                   gridTemplateColumns: "20px 1fr",
@@ -597,10 +618,10 @@ export default function Landing() {
       </section>
 
       {/* ── PLANOS ── */}
-      <section style={{ padding: "80px 20px", background: "#fafaf8" }}>
+      <section style={{ padding: "64px 20px", background: "#fafaf8" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", textAlign: "center" }}>
-          <span className="vf-tag" style={{ margin: "0 auto 0", display: "inline-block" }}>Planos</span>
-          <h2 className="vf-serif" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 900, color: "#111", marginTop: 12, marginBottom: 8 }}>
+          <span className="vf-tag" style={{ display: "inline-block" }}>Planos</span>
+          <h2 className="vf-serif" style={{ fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 900, color: "#111", marginTop: 12, marginBottom: 8 }}>
             Comece grátis. Assine quando fizer sentido.
           </h2>
           <p className="vf-sans" style={{ fontSize: 15, color: "#777", margin: "0 auto", maxWidth: 380, lineHeight: 1.7 }}>
@@ -620,7 +641,7 @@ export default function Landing() {
                 {[
                   "Até 2 empresas",
                   "Até 5 funcionários por empresa",
-                  "Até 20 PDFs ",
+                  "Até 20 PDFs",
                   "Alertas por email",
                   "Painel de vencimentos",
                 ].map((item) => (
@@ -675,6 +696,7 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── FOOTER ── */}
       <footer style={{ borderTop: "1px solid #e0e0d8", background: "#fff", padding: "28px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <img src="/images/android-chrome-192x192.png" alt="UniDatas" style={{ height: 22, width: 22, borderRadius: 4, opacity: 0.7 }} />
