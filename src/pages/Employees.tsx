@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, ChevronRight, ChevronLeft, FileText, ShieldCheck } from "lucide-react";
+import {
+  Plus, Pencil, Trash2, Search, ChevronRight, ChevronLeft,
+  FileText, ShieldCheck, Users, AlertTriangle, Building2,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -59,33 +62,40 @@ function PeopleIllustration() {
   return (
     <svg viewBox="0 0 340 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-full w-full">
       <rect width="340" height="160" fill="#eef3fb" />
+      {/* plantas esquerda */}
       <ellipse cx="18" cy="145" rx="12" ry="6" fill="#bbf7d0" opacity="0.7"/>
       <path d="M18 145 Q15 130 22 120" stroke="#4ade80" strokeWidth="2" strokeLinecap="round"/>
       <path d="M18 138 Q12 128 8 118" stroke="#4ade80" strokeWidth="2" strokeLinecap="round"/>
       <ellipse cx="22" cy="119" rx="7" ry="5" fill="#86efac" opacity="0.8"/>
       <ellipse cx="8" cy="117" rx="6" ry="4" fill="#86efac" opacity="0.7"/>
+      {/* plantas direita */}
       <ellipse cx="310" cy="148" rx="10" ry="5" fill="#bbf7d0" opacity="0.6"/>
       <path d="M310 148 Q308 135 315 125" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round"/>
       <ellipse cx="315" cy="124" rx="6" ry="4" fill="#86efac" opacity="0.7"/>
+      {/* bolinhas decorativas */}
       <circle cx="270" cy="25" r="4" fill="#93c5fd" opacity="0.5"/>
       <circle cx="285" cy="15" r="2.5" fill="#93c5fd" opacity="0.4"/>
       <circle cx="260" cy="18" r="2" fill="#bfdbfe" opacity="0.5"/>
       <circle cx="50" cy="20" r="3" fill="#93c5fd" opacity="0.4"/>
       <circle cx="38" cy="30" r="2" fill="#bfdbfe" opacity="0.3"/>
+      {/* pessoa 1 – azul */}
       <rect x="55" y="90" width="38" height="55" rx="8" fill="#3b82f6"/>
       <rect x="69" y="80" width="10" height="14" rx="4" fill="#fcd6b0"/>
       <ellipse cx="74" cy="68" rx="16" ry="17" fill="#fcd6b0"/>
       <ellipse cx="74" cy="56" rx="16" ry="10" fill="#1e293b"/>
       <ellipse cx="60" cy="65" rx="6" ry="9" fill="#1e293b"/>
       <ellipse cx="88" cy="65" rx="5" ry="8" fill="#1e293b"/>
+      {/* pessoa 2 – cinza */}
       <rect x="130" y="85" width="44" height="60" rx="8" fill="#64748b"/>
       <rect x="146" y="75" width="12" height="14" rx="4" fill="#fcd6b0"/>
       <ellipse cx="152" cy="62" rx="18" ry="19" fill="#fcd6b0"/>
       <ellipse cx="152" cy="47" rx="18" ry="10" fill="#292524"/>
+      {/* pessoa 3 – amarelo */}
       <rect x="210" y="92" width="38" height="55" rx="8" fill="#fbbf24"/>
       <rect x="224" y="82" width="10" height="14" rx="4" fill="#fde8c8"/>
       <ellipse cx="229" cy="70" rx="16" ry="17" fill="#fde8c8"/>
       <ellipse cx="229" cy="57" rx="16" ry="9" fill="#92400e"/>
+      {/* sombras */}
       <ellipse cx="74" cy="158" rx="28" ry="4" fill="#c7d7f0" opacity="0.5"/>
       <ellipse cx="152" cy="158" rx="32" ry="4" fill="#c7d7f0" opacity="0.5"/>
       <ellipse cx="229" cy="158" rx="28" ry="4" fill="#c7d7f0" opacity="0.5"/>
@@ -104,37 +114,75 @@ function aggregate(docs?: DocLite[]) {
   return a;
 }
 
+/* ── Card mobile ── */
 function EmployeeCard({ e, onEdit, onRemove }: { e: Employee; onEdit: (e: Employee) => void; onRemove: (id: string) => void }) {
   const a = aggregate(e.documents);
+  const isActive = a.expired === 0;
+
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3">
+    <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
       <Link to={`/funcionarios/${e.id}`} className="shrink-0">
         <span className={cn("flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-bold text-white", avatarColor(e.full_name))}>
           {initials(e.full_name)}
         </span>
       </Link>
+
       <Link to={`/funcionarios/${e.id}`} className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-gray-900 text-sm">{e.full_name}</p>
-        <p className="truncate text-xs text-gray-400">
+        <div className="flex items-center gap-2">
+          <p className="truncate font-semibold text-gray-900 text-sm">{e.full_name}</p>
+          <span className={cn(
+            "shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+            isActive ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+          )}>
+            <span className={cn("h-1.5 w-1.5 rounded-full", isActive ? "bg-green-500" : "bg-red-500")} />
+            {isActive ? "Ativo" : "Pendente"}
+          </span>
+        </div>
+        <p className="truncate text-xs text-gray-400 mt-0.5">
           {[e.role, e.companies?.name].filter(Boolean).join(" · ") || "—"}
         </p>
         {a.total > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1">
-            {a.expired > 0 && <span className="inline-flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600"><FileText className="h-2.5 w-2.5" /> {a.expired} vencido{a.expired > 1 ? "s" : ""}</span>}
-            {a.soon > 0 && <span className="inline-flex items-center gap-0.5 rounded-md bg-orange-50 px-1.5 py-0.5 text-[10px] font-semibold text-orange-500"><FileText className="h-2.5 w-2.5" /> {a.soon} a vencer</span>}
-            {a.ok > 0 && <span className="inline-flex items-center gap-0.5 rounded-md bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-600"><FileText className="h-2.5 w-2.5" /> {a.ok} ok</span>}
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {a.expired > 0 && (
+              <span className="inline-flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                <FileText className="h-2.5 w-2.5" /> {a.expired} vencido{a.expired > 1 ? "s" : ""}
+              </span>
+            )}
+            {a.soon > 0 && (
+              <span className="inline-flex items-center gap-0.5 rounded-md bg-orange-50 px-1.5 py-0.5 text-[10px] font-semibold text-orange-500">
+                <FileText className="h-2.5 w-2.5" /> {a.soon} a vencer
+              </span>
+            )}
+            {a.ok > 0 && (
+              <span className="inline-flex items-center gap-0.5 rounded-md bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-600">
+                <FileText className="h-2.5 w-2.5" /> {a.ok} em dia
+              </span>
+            )}
           </div>
         )}
+        {a.total === 0 && (
+          <p className="text-[10px] text-gray-300 mt-0.5">Sem documentos</p>
+        )}
       </Link>
+
       <div className="flex shrink-0 items-center gap-0.5">
-        <button onClick={() => onEdit(e)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
-        <button onClick={() => onRemove(e.id)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
-        <Link to={`/funcionarios/${e.id}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"><ChevronRight className="h-4 w-4" /></Link>
+        <button onClick={() => onEdit(e)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button onClick={() => onRemove(e.id)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+        <Link to={`/funcionarios/${e.id}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+          <ChevronRight className="h-4 w-4" />
+        </Link>
       </div>
     </div>
   );
 }
 
+/* ══════════════════════════════════════════════════════
+   PÁGINA PRINCIPAL
+══════════════════════════════════════════════════════ */
 export default function Employees() {
   const { user } = useAuth();
   const { isTrial } = useSubscription();
@@ -150,7 +198,10 @@ export default function Employees() {
   const { data: list = [] } = useQuery<Employee[]>({
     queryKey: ["employees"],
     queryFn: async () => {
-      const { data } = await supabase.from("employees").select("*, companies(name), documents(expiry_date)").order("full_name");
+      const { data } = await supabase
+        .from("employees")
+        .select("*, companies(name), documents(expiry_date)")
+        .order("full_name");
       return (data as any) ?? [];
     },
   });
@@ -168,19 +219,30 @@ export default function Employees() {
     queryClient.invalidateQueries({ queryKey: ["companies"] });
   };
 
-  // Conta funcionários por empresa
   const employeeCountByCompany = useMemo(() => {
     const counts: Record<string, number> = {};
-    list.forEach((e) => {
-      counts[e.company_id] = (counts[e.company_id] ?? 0) + 1;
-    });
+    list.forEach((e) => { counts[e.company_id] = (counts[e.company_id] ?? 0) + 1; });
     return counts;
   }, [list]);
 
-  const checkTrialLimit = (companyId: string): boolean => {
+  /* ── estatísticas ── */
+  const stats = useMemo(() => {
+    const totalDocs = list.reduce((acc, e) => acc + (e.documents?.length ?? 0), 0);
+    const docsExpiringSoon = list.reduce((acc, e) => {
+      return acc + (e.documents?.filter(d => {
+        const s = getStatus(d.expiry_date);
+        return s.key === "attention" || s.key === "warning" || s.key === "expired";
+      }).length ?? 0);
+    }, 0);
+    const compliant = list.length > 0
+      ? Math.round((list.filter(e => aggregate(e.documents).expired === 0).length / list.length) * 100)
+      : 100;
+    return { total: list.length, totalDocs, docsExpiringSoon, compliant };
+  }, [list]);
+
+  const checkTrialLimit = (companyId: string) => {
     if (!isTrial) return true;
-    const count = employeeCountByCompany[companyId] ?? 0;
-    return count < TRIAL_MAX_EMPLOYEES_PER_COMPANY;
+    return (employeeCountByCompany[companyId] ?? 0) < TRIAL_MAX_EMPLOYEES_PER_COMPANY;
   };
 
   const openNew = () => {
@@ -204,9 +266,7 @@ export default function Employees() {
       if (error) return toast.error(error.message);
       toast.success("Funcionário atualizado");
     } else {
-      // Verifica limite do trial por empresa
       if (isTrial && !checkTrialLimit(parsed.data.company_id)) {
-        const count = employeeCountByCompany[parsed.data.company_id] ?? 0;
         toast.error(`Limite de ${TRIAL_MAX_EMPLOYEES_PER_COMPANY} funcionários por empresa atingido no período de teste.`, {
           description: "Assine o plano Pro para cadastrar funcionários ilimitados.",
           action: { label: "Ver planos", onClick: () => navigate("/planos") },
@@ -252,47 +312,105 @@ export default function Employees() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  // Verifica se empresa selecionada no form atingiu o limite
   const selectedCompanyLimitReached = isTrial && form.company_id && !checkTrialLimit(form.company_id);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
+
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Funcionários</h1>
-          <p className="text-sm text-gray-500">Gerencie sua equipe e os documentos com mais praticidade.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Funcionários</h1>
+          <p className="text-xs sm:text-sm text-gray-500">Gerencie sua equipe e os documentos com mais praticidade.</p>
         </div>
         <button
           onClick={openNew}
           disabled={companies.length === 0}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+          className="flex items-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
         >
           <Plus className="h-4 w-4" /> Novo funcionário
         </button>
       </div>
 
-      
-
       {/* ── Banner ilustrado ── */}
       <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#eef3fb]">
+        {/* Mobile */}
         <div className="flex items-center gap-3 px-4 py-4 sm:hidden">
           <div className="h-16 w-16 shrink-0"><PeopleIllustration /></div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h2 className="text-sm font-bold text-gray-800 leading-snug">Tudo da sua equipe em um só lugar</h2>
             <p className="mt-0.5 text-xs text-blue-600/80 leading-snug">Visualize datas de documentos de forma rápida e segura.</p>
           </div>
-          <ShieldCheck className="h-7 w-7 shrink-0 text-blue-400" />
+          <div className="shrink-0 flex flex-col items-center gap-0.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 border border-blue-100">
+              <ShieldCheck className="h-5 w-5 text-blue-400" />
+            </div>
+            <span className="text-[9px] text-gray-400 text-center leading-tight">Segurança e<br/>conformidade</span>
+          </div>
         </div>
+        {/* Desktop */}
         <div className="hidden sm:block" style={{ height: 160 }}>
           <div className="absolute left-0 top-0 h-full w-[320px]"><PeopleIllustration /></div>
           <div className="absolute left-[300px] top-1/2 -translate-y-1/2 max-w-[260px]">
             <h2 className="text-base font-bold text-gray-800">Tudo da sua equipe em um só lugar</h2>
             <p className="mt-1 text-sm text-blue-600/80">Visualize datas de documentos em um só lugar, de forma rápida e segura.</p>
           </div>
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 border border-blue-100">
-            <ShieldCheck className="h-8 w-8 text-blue-400" />
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 border border-blue-100">
+              <ShieldCheck className="h-8 w-8 text-blue-400" />
+            </div>
+            <span className="text-xs text-gray-500 font-medium text-center leading-tight">Segurança e<br/>conformidade</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Cards de estatísticas ── */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+        {/* Total funcionários */}
+        <div className="rounded-2xl border border-gray-200 bg-white px-3 py-3 sm:px-4 sm:py-4 flex items-center gap-2.5 sm:gap-3 shadow-sm">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{stats.total}</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 leading-tight">Total de funcionários</p>
+            <p className="text-[10px] sm:text-xs text-blue-500 font-medium leading-tight">Ativos na plataforma</p>
+          </div>
+        </div>
+
+        {/* Documentos cadastrados */}
+        <div className="rounded-2xl border border-gray-200 bg-white px-3 py-3 sm:px-4 sm:py-4 flex items-center gap-2.5 sm:gap-3 shadow-sm">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-green-50">
+            <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{stats.totalDocs}</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 leading-tight">Documentos cadastrados</p>
+            <p className="text-[10px] sm:text-xs text-green-500 font-medium leading-tight">Todos os funcionários</p>
+          </div>
+        </div>
+
+        {/* Documentos vencendo */}
+        <div className="rounded-2xl border border-gray-200 bg-white px-3 py-3 sm:px-4 sm:py-4 flex items-center gap-2.5 sm:gap-3 shadow-sm">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50">
+            <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{stats.docsExpiringSoon}</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 leading-tight">Documentos vencendo</p>
+            <p className="text-[10px] sm:text-xs text-orange-400 font-medium leading-tight">Próximos 30 dias</p>
+          </div>
+        </div>
+
+        {/* Em conformidade */}
+        <div className="rounded-2xl border border-gray-200 bg-white px-3 py-3 sm:px-4 sm:py-4 flex items-center gap-2.5 sm:gap-3 shadow-sm">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50">
+            <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{stats.compliant}%</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 leading-tight">Em conformidade</p>
+            <p className="text-[10px] sm:text-xs text-purple-500 font-medium leading-tight">Da equipe</p>
           </div>
         </div>
       </div>
@@ -310,6 +428,7 @@ export default function Employees() {
         </div>
         <Select value={companyFilter} onValueChange={(v) => { setCompanyFilter(v); setPage(1); }}>
           <SelectTrigger className="h-10 w-full sm:w-[200px] rounded-xl border-gray-200 text-sm">
+            <Building2 className="h-3.5 w-3.5 text-gray-400 mr-1.5 shrink-0" />
             <SelectValue placeholder="Todas as empresas" />
           </SelectTrigger>
           <SelectContent>
@@ -340,25 +459,33 @@ export default function Employees() {
         </div>
       ) : (
         <>
+          {/* Mobile cards */}
           <div className="flex flex-col gap-2 sm:hidden">
-            {paginated.map((e) => <EmployeeCard key={e.id} e={e} onEdit={openEdit} onRemove={remove} />)}
+            {paginated.map((e) => (
+              <EmployeeCard key={e.id} e={e} onEdit={openEdit} onRemove={remove} />
+            ))}
           </div>
 
+          {/* Desktop tabela */}
           <div className="hidden sm:block overflow-hidden rounded-2xl border border-gray-200 bg-white">
             <table className="w-full text-sm">
               <thead className="border-b border-gray-100 text-left text-[11px] uppercase tracking-wide text-gray-400">
                 <tr>
-                  <th className="px-4 py-3 font-semibold"><span className="flex items-center gap-1">Funcionário <ChevronRight className="h-3 w-3 rotate-90" /></span></th>
+                  <th className="px-4 py-3 font-semibold">
+                    <span className="flex items-center gap-1">Funcionário <ChevronRight className="h-3 w-3 rotate-90" /></span>
+                  </th>
                   <th className="px-4 py-3 font-semibold">CPF</th>
                   <th className="px-4 py-3 font-semibold">Cargo</th>
                   <th className="px-4 py-3 font-semibold">Empresa</th>
                   <th className="px-4 py-3 text-center font-semibold">Documentos</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 text-right font-semibold">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {paginated.map((e) => {
                   const a = aggregate(e.documents);
+                  const isActive = a.expired === 0;
                   return (
                     <tr key={e.id} className="hover:bg-gray-50/60 transition-colors">
                       <td className="px-4 py-3">
@@ -374,20 +501,51 @@ export default function Employees() {
                       <td className="px-4 py-3 text-gray-500 text-xs uppercase">{e.companies?.name ?? "—"}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1.5">
-                          {a.total === 0 ? <span className="text-gray-300">—</span> : (
+                          {a.total === 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-400">
+                              <FileText className="h-3 w-3" /> 0 <span className="text-gray-300">Em dia</span>
+                            </span>
+                          ) : (
                             <>
-                              {a.expired > 0 && <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600"><FileText className="h-3 w-3" /> {a.expired}</span>}
-                              {a.soon > 0 && <span className="inline-flex items-center gap-1 rounded-lg bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-500"><FileText className="h-3 w-3" /> {a.soon}</span>}
-                              {a.ok > 0 && <span className="inline-flex items-center gap-1 rounded-lg bg-green-50 px-2 py-1 text-[11px] font-semibold text-green-600"><FileText className="h-3 w-3" /> {a.ok}</span>}
+                              {a.expired > 0 && (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600">
+                                  <FileText className="h-3 w-3" /> {a.expired}
+                                </span>
+                              )}
+                              {a.soon > 0 && (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-500">
+                                  <FileText className="h-3 w-3" /> {a.soon}
+                                </span>
+                              )}
+                              {a.ok > 0 && (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-green-50 px-2 py-1 text-[11px] font-semibold text-green-600">
+                                  <FileText className="h-3 w-3" /> {a.ok} <span className="hidden lg:inline">Em dia</span>
+                                </span>
+                              )}
                             </>
                           )}
                         </div>
                       </td>
                       <td className="px-4 py-3">
+                        <span className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
+                          isActive ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+                        )}>
+                          <span className={cn("h-1.5 w-1.5 rounded-full", isActive ? "bg-green-500" : "bg-red-500")} />
+                          {isActive ? "Ativo" : "Pendente"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => openEdit(e)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => remove(e.id)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
-                          <Link to={`/funcionarios/${e.id}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"><ChevronRight className="h-4 w-4" /></Link>
+                          <button onClick={() => openEdit(e)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => remove(e.id)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                          <Link to={`/funcionarios/${e.id}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                            <ChevronRight className="h-4 w-4" />
+                          </Link>
                         </div>
                       </td>
                     </tr>
@@ -395,26 +553,40 @@ export default function Employees() {
                 })}
               </tbody>
             </table>
+
+            {/* Paginação desktop */}
             <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
               <p className="text-xs text-gray-400">
                 Mostrando {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)} a {Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length} funcionário{filtered.length !== 1 ? "s" : ""}
               </p>
               <div className="flex items-center gap-1">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 disabled:opacity-40 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
-                  <button key={p} onClick={() => setPage(p)} className={cn("flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition-colors", p === page ? "bg-blue-600 text-white" : "border border-gray-200 text-gray-500 hover:bg-gray-50")}>{p}</button>
+                  <button key={p} onClick={() => setPage(p)} className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition-colors",
+                    p === page ? "bg-blue-600 text-white" : "border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  )}>{p}</button>
                 ))}
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 disabled:opacity-40 transition-colors"><ChevronRight className="h-4 w-4" /></button>
+                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>
 
+          {/* Paginação mobile */}
           <div className="flex items-center justify-between sm:hidden">
             <p className="text-xs text-gray-400">{filtered.length} funcionário{filtered.length !== 1 ? "s" : ""}</p>
             <div className="flex items-center gap-1">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 disabled:opacity-40 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
               <span className="px-2 text-xs text-gray-500">{page} / {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 disabled:opacity-40 transition-colors"><ChevronRight className="h-4 w-4" /></button>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </>
@@ -470,7 +642,7 @@ export default function Employees() {
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button
               onClick={submit}
-              disabled={!editing && selectedCompanyLimitReached}
+              disabled={!editing && !!selectedCompanyLimitReached}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
             >
               {editing ? "Salvar" : "Cadastrar"}
