@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getStatus, formatDaysLeft } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-const MAX_FILES     = 10;
+const MAX_FILES     = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface Employee {
@@ -95,7 +95,12 @@ function UploadModal({ open, onClose, employeeId, userId, onSaved }: {
     }
     setSelectedFiles((prev) => {
       const merged = [...prev, ...valid];
-      if (merged.length > MAX_FILES) { toast.error(`Máximo de ${MAX_FILES} arquivos por vez`); return merged.slice(0, MAX_FILES); }
+      if (merged.length > MAX_FILES) {
+        toast.error(
+          `Limite de ${MAX_FILES} arquivos atingido. Remova alguns antes de adicionar mais.`
+        );
+        return prev;
+      }
       return merged;
     });
   };
