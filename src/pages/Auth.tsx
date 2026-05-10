@@ -86,6 +86,23 @@ export default function AuthPage() {
     }
   };
 
+  // ── NOVO: Login com Google ──
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/dashboard",
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao entrar com Google");
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <style>{`
@@ -104,7 +121,6 @@ export default function AuthPage() {
           .auth-left  { display: none; }
         }
 
-        /* ── Lado esquerdo ── */
         .auth-left {
           position: relative;
           background: #1C2B3A;
@@ -165,9 +181,7 @@ export default function AuthPage() {
           letter-spacing: -0.3px;
         }
 
-        .auth-left-content {
-          position: relative;
-        }
+        .auth-left-content { position: relative; }
 
         .auth-left-quote {
           font-family: 'Lora', serif;
@@ -180,10 +194,7 @@ export default function AuthPage() {
           letter-spacing: -0.2px;
         }
 
-        .auth-left-quote em {
-          color: #C5986C;
-          font-style: normal;
-        }
+        .auth-left-quote em { color: #C5986C; font-style: normal; }
 
         .auth-left-sub {
           font-size: 13px;
@@ -210,7 +221,6 @@ export default function AuthPage() {
 
         .auth-left-dot.lit { background: rgba(197,152,108,0.6); }
 
-        /* ── Lado direito ── */
         .auth-right {
           display: flex;
           align-items: center;
@@ -230,9 +240,7 @@ export default function AuthPage() {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        .auth-box-header {
-          margin-bottom: 36px;
-        }
+        .auth-box-header { margin-bottom: 36px; }
 
         .auth-box-eyebrow {
           font-size: 11px;
@@ -259,10 +267,7 @@ export default function AuthPage() {
           font-weight: 300;
         }
 
-        /* ── Campos ── */
-        .auth-field {
-          margin-bottom: 20px;
-        }
+        .auth-field { margin-bottom: 20px; }
 
         .auth-label {
           display: block;
@@ -316,7 +321,6 @@ export default function AuthPage() {
         .auth-forgot:hover { opacity: 0.7; }
         .auth-forgot:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* ── Botão principal ── */
         .auth-btn {
           width: 100%;
           padding: 13px;
@@ -341,12 +345,39 @@ export default function AuthPage() {
         .auth-btn:active:not(:disabled) { transform: translateY(0); }
         .auth-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-        /* ── Divisor ── */
+        /* ── Botão Google ── */
+        .auth-btn-google {
+          width: 100%;
+          padding: 12px;
+          background: #FFFFFF;
+          color: #1C2B3A;
+          border: 1.5px solid #DDD8D0;
+          border-radius: 10px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.18s, border-color 0.18s, transform 0.12s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 12px;
+        }
+
+        .auth-btn-google:hover:not(:disabled) {
+          background: #F0EDE8;
+          border-color: #C5B8AC;
+          transform: translateY(-1px);
+        }
+
+        .auth-btn-google:disabled { opacity: 0.55; cursor: not-allowed; }
+
         .auth-divider {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin: 24px 0 0;
+          margin: 20px 0;
         }
 
         .auth-divider-line {
@@ -362,7 +393,6 @@ export default function AuthPage() {
           white-space: nowrap;
         }
 
-        /* ── Toggle de modo ── */
         .auth-toggle {
           margin-top: 28px;
           text-align: center;
@@ -387,7 +417,6 @@ export default function AuthPage() {
 
         .auth-toggle button:hover { color: #C5986C; }
 
-        /* ── Ornamento decorativo ── */
         .auth-ornament {
           position: absolute;
           top: 40px;
@@ -430,7 +459,6 @@ export default function AuthPage() {
             </p>
           </div>
 
-          {/* Pontos decorativos */}
           <div className="auth-left-dots">
             {Array.from({ length: 24 }).map((_, i) => (
               <div key={i} className={`auth-left-dot ${[2, 7, 13, 19].includes(i) ? "lit" : ""}`} />
@@ -455,6 +483,28 @@ export default function AuthPage() {
                   ? "Comece em menos de 30 segundos."
                   : "Digite seus dados para continuar."}
               </p>
+            </div>
+
+            {/* ── Botão Google ── */}
+            <button
+              type="button"
+              className="auth-btn-google"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+              </svg>
+              Continuar com Google
+            </button>
+
+            <div className="auth-divider">
+              <div className="auth-divider-line" />
+              <span className="auth-divider-text">ou continue com e-mail</span>
+              <div className="auth-divider-line" />
             </div>
 
             <form onSubmit={handleSubmit}>
