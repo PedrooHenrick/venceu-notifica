@@ -706,6 +706,9 @@ export default function Landing() {
         <a href="/privacy" style={{ fontSize: 13, color: "#7A8695", textDecoration: "none" }}>
           Política de Privacidade
         </a>
+        <a href="/terms" style={{ fontSize: 13, color: "#7A8695", textDecoration: "none" }}>
+          Termos de Serviço
+</a>
       </footer>
     </div>
     
