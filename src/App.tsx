@@ -15,6 +15,7 @@ import CompanyDocuments from "./pages/CompanyDocuments";
 import Reports from "./pages/Reports";
 import Planos from "./pages/Planos";
 import PagamentoSucesso from "./pages/PagamentoSucesso";
+import PrivacyPage from "./pages/Privacy";
 import AppLayout from "./components/AppLayout";
 import RequireAuth from "./components/RequireAuth";
 import { SubscriptionGuard } from "./components/SubscriptionGuard";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
 
             {/* Requer auth, mas sem guard de subscription */}
             <Route path="/planos" element={<RequireAuth><Planos /></RequireAuth>} />

@@ -697,6 +697,7 @@ export default function Landing() {
       </section>
 
       {/* ── FOOTER ── */}
+      <a href="/privacy">Política de Privacidade</a>
       <footer style={{ borderTop: "1px solid #e0e0d8", background: "#fff", padding: "28px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <img src="/images/android-chrome-192x192.png" alt="UniDatas" style={{ height: 22, width: 22, borderRadius: 4, opacity: 0.7 }} />
