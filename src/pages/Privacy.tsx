@@ -255,7 +255,7 @@ export default function PrivacyPage() {
             <h2>Dúvidas ou solicitações?</h2>
             <p>
               Entre em contato conosco pelo e-mail:{" "}
-              <a href="mailto:hxpedrinho@gmail.com">hxpedrinho@gmail.com</a>
+              <a href="mailto:unidatas@gmail.com">unidatas@gmail.com</a>
               <br />
               Respondemos em até 2 dias úteis.
             </p>
